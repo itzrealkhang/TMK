@@ -415,12 +415,12 @@ body {
   <div class="header">
     <h1 class="rainbow-text">TMK API</h1>
     <button class="toggle" onclick="toggleMode()">
-      <span></span> Dark Mode
+      <span>&#127769;</span> Dark Mode
     </button>
   </div>
   
   <div class="subtitle">
-    REST API · Real-time image · 99.9% uptime
+    REST API &#183; Real-time image &#183; 99.9% uptime
   </div>
   
   <!-- Stats -->
@@ -439,7 +439,7 @@ body {
     </div>
     <div class="stat-item">
       <div class="stat-label">Status</div>
-      <div class="stat-value" id="apiStatus" style="color: #22c55e;"> Live</div>
+      <div class="stat-value" id="apiStatus" style="color: #22c55e;">&#9679; Live</div>
     </div>
   </div>
   
@@ -460,7 +460,7 @@ body {
       
       <div class="button-group" style="margin-top: 16px;">
         <button class="btn btn-primary" onclick="copyEndpoint()">
-          <span></span> Copy URL
+          <span>&#128203;</span> Copy URL
         </button>
       </div>
     </div>
@@ -489,9 +489,9 @@ body {
     <div class="card">
       <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
         <button class="btn btn-primary" onclick="fetchRandomImage()">
-          <span></span> Fetch Random Image
+          <span>&#128260;</span> Fetch Random Image
         </button>
-        <span style="background: #f1f5f9; padding: 8px 16px; border-radius: 30px; font-size: 13px; color: #475569;">/gái · GET</span>
+        <span style="background: #f1f5f9; padding: 8px 16px; border-radius: 30px; font-size: 13px; color: #475569;">/gái &#183; GET</span>
       </div>
       
       <div class="demo-container">
@@ -505,10 +505,10 @@ body {
   
   <!-- Footer -->
   <div class="footer">
-    <div>© 2026 TMK API · v1.0.0</div>
+    <div>&copy; 2026 TMK API &#183; v1.0.0</div>
     <div>
-      <span id="visitCount">0</span> requests today · 
-      <span> 30ms cache</span>
+      <span id="visitCount">0</span> requests today &#183; 
+      <span>&#9889; 30ms cache</span>
     </div>
   </div>
 </div>
@@ -523,7 +523,7 @@ document.getElementById('getMethodBtn').href = apiUrl;
 // Copy function
 function copyEndpoint() {
   navigator.clipboard.writeText(apiUrl).then(() => {
-    alert(" ã copy: " + apiUrl);
+    alert("&#9989; ã copy: " + apiUrl);
   });
 }
 
@@ -532,9 +532,9 @@ function toggleMode() {
   document.body.classList.toggle("dark");
   const btn = document.querySelector('.toggle span:first-child');
   if (document.body.classList.contains('dark')) {
-    btn.textContent = '';
+    btn.innerHTML = '&#9728;';
   } else {
-    btn.textContent = '';
+    btn.innerHTML = '&#127769;';
   }
 }
 
