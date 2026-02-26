@@ -179,7 +179,7 @@ body {
   box-shadow: 0 4px 6px -2px rgba(0,0,0,0.3);
 }
 
-/* Endpoint display - QUAN TRNG: Hin ch "gái" thay vì link */
+/* Endpoint display */
 .endpoint-display {
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@ body {
   box-shadow: 0 8px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Code block nh cho curl */
+/* Code block */
 .code-small {
   background: #0b1120;
   color: #e2e8f0;
@@ -443,11 +443,10 @@ body {
     </div>
   </div>
   
-  <!-- Endpoint vi ch "gái" và nút GET -->
+  <!-- Endpoint -->
   <div class="section">
     <div class="section-title">Base Endpoint</div>
     <div class="card">
-      <!-- Hin th ch gái thay vì link dài -->
       <div class="endpoint-display">
         <span class="endpoint-path">/gái</span>
         <a href="/gai" target="_blank" class="method-badge method-get" id="getMethodBtn">
@@ -455,7 +454,6 @@ body {
         </a>
       </div>
       
-      <!-- Hin th link y  dng curl (nh gn) -->
       <div class="code-small">
         <span style="color: #22c55e;">curl</span> -X GET <span style="color: #f97316;">"https://tmk-qzph.onrender.com/gai"</span>
       </div>
@@ -516,14 +514,13 @@ body {
 </div>
 
 <script>
-// Config - Ly domain hin ti
+// Config
 const baseUrl = window.location.origin;
 const apiUrl = baseUrl + "/gai";
 
-// Hin th endpoint path là "/gái" nhng link vn là "/gai"
 document.getElementById('getMethodBtn').href = apiUrl;
 
-// Copy function - copy link y 
+// Copy function
 function copyEndpoint() {
   navigator.clipboard.writeText(apiUrl).then(() => {
     alert(" ã copy: " + apiUrl);
