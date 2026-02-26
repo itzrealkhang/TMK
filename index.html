@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Image Service</title>
+
+<style>
+:root{
+  --bg:#f4f6fb;
+  --card:#fff;
+  --text:#222;
+}
+
+body.dark{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#e2e8f0;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  transition:.3s;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:40px 20px;
+}
+
+.card{
+  background:var(--card);
+  padding:30px;
+  border-radius:14px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+.rainbow{
+  font-size:32px;
+  font-weight:bold;
+  background:linear-gradient(
+    90deg,
+    #ff9aa2,
+    #ffb7b2,
+    #ffdac1,
+    #e2f0cb,
+    #b5ead7,
+    #c7ceea,
+    #fbc2eb
+  );
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.code{
+  background:#0d1117;
+  color:#e6edf3;
+  padding:15px;
+  border-radius:10px;
+  margin-top:15px;
+  position:relative;
+  font-family:monospace;
+}
+
+.copy{
+  position:absolute;
+  top:10px;
+  right:10px;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  background:#22c55e;
+  color:white;
+  cursor:pointer;
+}
+
+.toggle{
+  float:right;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  background:#6366f1;
+  color:white;
+  cursor:pointer;
+}
+
+.endpoint{
+  background:rgba(99,102,241,.1);
+  padding:6px 10px;
+  border-radius:6px;
+  display:inline-block;
+  margin-top:10px;
+  font-weight:bold;
+}
+
+footer{
+  margin-top:20px;
+  text-align:center;
+  opacity:.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<button class="toggle" onclick="toggleDark()">🌙 Dark</button>
+
+<div class="card">
+
+<div class="rainbow">🌈 API Image Service</div>
+
+<p>
+Dịch vụ API cung cấp hình ảnh ngẫu nhiên thông qua endpoint HTTP.
+Hệ thống trả về dữ liệu JSON nhanh chóng, phù hợp tích hợp bot,
+website hoặc ứng dụng.
+</p>
+
+<h3>Endpoint</h3>
+
+<div class="endpoint">GET /gai</div>
+
+<div class="code" id="code">
+<button class="copy" onclick="copyCode()">Copy</button>
+{
+  "status": true,
+  "endpoint": "/gai",
+  "image": "https://i.pinimg.com/xxxxx.jpg",
+  "source": "pinterest"
+}
+</div>
+
+</div>
+
+<footer>
+API Service © 2026
+</footer>
+
+</div>
+
+<script>
+function copyCode(){
+  const text=document.getElementById("code").innerText;
+  navigator.clipboard.writeText(text);
+  alert("Đã copy!");
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
