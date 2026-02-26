@@ -179,7 +179,7 @@ body {
   box-shadow: 0 4px 6px -2px rgba(0,0,0,0.3);
 }
 
-/* Endpoint display */
+/* Endpoint display - Hin th ch "gái" thay vì link */
 .endpoint-display {
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@ body {
   box-shadow: 0 8px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Code block */
+/* Code block nh cho curl */
 .code-small {
   background: #0b1120;
   color: #e2e8f0;
@@ -420,7 +420,7 @@ body {
   </div>
   
   <div class="subtitle">
-    REST API · Real-time image · 99.9% uptime · Format JSON n gin
+    REST API · Real-time image · 99.9% uptime
   </div>
   
   <!-- Stats -->
@@ -455,7 +455,7 @@ body {
         </a>
       </div>
       
-      <!-- Hin th link y  dng curl -->
+      <!-- Hin th link y  dng curl (nh gn) -->
       <div class="code-small">
         <span style="color: #22c55e;">curl</span> -X GET <span style="color: #f97316;">"https://tmk-qzph.onrender.com/gai"</span>
       </div>
@@ -468,7 +468,7 @@ body {
     </div>
   </div>
   
-  <!-- Response Example - Format mi -->
+  <!-- Response Example - ã update format mi -->
   <div class="section">
     <div class="section-title">Sample Response</div>
     <div class="card">
@@ -481,9 +481,6 @@ body {
   "count": 147
 }
       </div>
-      <p style="margin-top: 12px; color: #64748b; font-size: 14px;">
-         Format mi: success, data (mng), count - ngn gn, d x lý
-      </p>
     </div>
   </div>
   
@@ -543,7 +540,7 @@ function toggleMode() {
   }
 }
 
-// Fetch API và update stats - ã update cho format mi
+// Fetch API và update stats - ã update format mi
 async function fetchRandomImage() {
   const img = document.getElementById('demoImage');
   const loading = document.getElementById('loadingText');
@@ -565,7 +562,7 @@ async function fetchRandomImage() {
     
     // X lý format mi
     if (data.success && data.data && data.data.length > 0) {
-      img.src = data.data[0];  // Ly link t mng data
+      img.src = data.data[0];
       img.onload = () => {
         loading.style.display = 'none';
         img.style.display = 'block';
@@ -577,7 +574,19 @@ async function fetchRandomImage() {
         cacheCountEl.textContent = data.count;
       }
     } else {
-      throw new Error('Invalid data format');
+      // Fallback cho format c (nu có)
+      if (data.status && data.image) {
+        img.src = data.image;
+        img.onload = () => {
+          loading.style.display = 'none';
+          img.style.display = 'block';
+        };
+        if (data.total_images) {
+          cacheCountEl.textContent = data.total_images;
+        }
+      } else {
+        throw new Error('Invalid data format');
+      }
     }
   } catch (err) {
     console.error('Fetch error:', err);
