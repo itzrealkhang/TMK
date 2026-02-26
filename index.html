@@ -179,7 +179,7 @@ body {
   box-shadow: 0 4px 6px -2px rgba(0,0,0,0.3);
 }
 
-/* Endpoint display - QUAN TRNG: Hin ch "gái" thay vì link */
+/* Endpoint display */
 .endpoint-display {
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@ body {
   box-shadow: 0 8px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Code block nh cho curl */
+/* Code block */
 .code-small {
   background: #0b1120;
   color: #e2e8f0;
@@ -420,7 +420,7 @@ body {
   </div>
   
   <div class="subtitle">
-    REST API · Real-time image · 99.9% uptime
+    REST API · Real-time image · 99.9% uptime · Format JSON n gin
   </div>
   
   <!-- Stats -->
@@ -435,7 +435,7 @@ body {
     </div>
     <div class="stat-item">
       <div class="stat-label">Endpoints</div>
-      <div class="stat-value">1</div>
+      <div class="stat-value">2</div>
     </div>
     <div class="stat-item">
       <div class="stat-label">Status</div>
@@ -455,7 +455,7 @@ body {
         </a>
       </div>
       
-      <!-- Hin th link y  dng curl (nh gn) -->
+      <!-- Hin th link y  dng curl -->
       <div class="code-small">
         <span style="color: #22c55e;">curl</span> -X GET <span style="color: #f97316;">"https://tmk-qzph.onrender.com/gai"</span>
       </div>
@@ -468,20 +468,22 @@ body {
     </div>
   </div>
   
-  <!-- Response Example -->
+  <!-- Response Example - Format mi -->
   <div class="section">
     <div class="section-title">Sample Response</div>
     <div class="card">
       <div class="code-small" style="white-space: pre;">
 {
-  "status": true,
-  "endpoint": "/gai",
-  "image": "https://i.pinimg.com/xxx.jpg",
-  "source": "pinterest",
-  "total_images": 147,
-  "timestamp": 1709123456789
+  "success": true,
+  "data": [
+    "https://i.pinimg.com/originals/xx/xx/xxx.jpg"
+  ],
+  "count": 147
 }
       </div>
+      <p style="margin-top: 12px; color: #64748b; font-size: 14px;">
+         Format mi: success, data (mng), count - ngn gn, d x lý
+      </p>
     </div>
   </div>
   
@@ -507,7 +509,7 @@ body {
   
   <!-- Footer -->
   <div class="footer">
-    <div>© 2026 TMK API · v1.0.0</div>
+    <div>© 2026 TMK API · v2.0.0</div>
     <div>
       <span id="visitCount">0</span> requests today · 
       <span> 30ms cache</span>
@@ -541,12 +543,13 @@ function toggleMode() {
   }
 }
 
-// Fetch API và update stats
+// Fetch API và update stats - ã update cho format mi
 async function fetchRandomImage() {
   const img = document.getElementById('demoImage');
   const loading = document.getElementById('loadingText');
   const responseTimeEl = document.getElementById('responseTime');
   const cacheCountEl = document.getElementById('cacheCount');
+  const apiStatusEl = document.getElementById('apiStatus');
   
   const start = Date.now();
   
@@ -560,20 +563,28 @@ async function fetchRandomImage() {
     const end = Date.now();
     responseTimeEl.textContent = `~${end - start}ms`;
     
-    if (data.status && data.image) {
-      img.src = data.image;
+    // X lý format mi
+    if (data.success && data.data && data.data.length > 0) {
+      img.src = data.data[0];  // Ly link t mng data
       img.onload = () => {
         loading.style.display = 'none';
         img.style.display = 'block';
+        apiStatusEl.innerHTML = ' Live';
+        apiStatusEl.style.color = '#22c55e';
       };
       
-      if (data.total_images) {
-        cacheCountEl.textContent = data.total_images;
+      if (data.count) {
+        cacheCountEl.textContent = data.count;
       }
+    } else {
+      throw new Error('Invalid data format');
     }
   } catch (err) {
+    console.error('Fetch error:', err);
     loading.style.display = 'none';
     img.style.display = 'block';
+    apiStatusEl.innerHTML = ' Issues';
+    apiStatusEl.style.color = '#ef4444';
   }
 }
 
