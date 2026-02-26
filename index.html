@@ -466,7 +466,7 @@ body {
     </div>
   </div>
   
-  <!-- Response Example - Ã UPDATE FORMAT MI -->
+  <!-- Response Example - FORMAT MI -->
   <div class="section">
     <div class="section-title">Sample Response</div>
     <div class="card">
@@ -482,7 +482,7 @@ body {
     </div>
   </div>
   
-  <!-- Demo - Ã UPDATE FETCH CHO FORMAT MI -->
+  <!-- Demo -->
   <div class="section">
     <div class="section-title">Live Demo</div>
     <div class="card">
@@ -537,7 +537,7 @@ function toggleMode() {
   }
 }
 
-// Fetch API - Ã UPDATE CHO FORMAT {success, data: [link], count}
+// Fetch API - X LÝ FORMAT {success, data: [link], count}
 async function fetchRandomImage() {
   const img = document.getElementById('demoImage');
   const loading = document.getElementById('loadingText');
@@ -557,7 +557,7 @@ async function fetchRandomImage() {
     const end = Date.now();
     responseTimeEl.textContent = `~${end - start}ms`;
     
-    // X LÝ FORMAT MI: {success, data: [link], count}
+    // X lý format mi: success, data: [link], count
     if (data.success && data.data && data.data.length > 0) {
       img.src = data.data[0];
       img.onload = () => {
@@ -570,19 +570,7 @@ async function fetchRandomImage() {
       if (data.count) {
         cacheCountEl.textContent = data.count;
       }
-    } 
-    // Fallback cho format c (nu có)
-    else if (data.status && data.image) {
-      img.src = data.image;
-      img.onload = () => {
-        loading.style.display = 'none';
-        img.style.display = 'block';
-      };
-      if (data.total_images) {
-        cacheCountEl.textContent = data.total_images;
-      }
-    }
-    else {
+    } else {
       throw new Error('Invalid data format');
     }
   } catch (err) {
