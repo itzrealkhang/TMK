@@ -179,7 +179,7 @@ body {
   box-shadow: 0 4px 6px -2px rgba(0,0,0,0.3);
 }
 
-/* Endpoint display */
+/* Endpoint display - QUAN TRNG: Hin ch "gái" thay vì link */
 .endpoint-display {
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@ body {
   box-shadow: 0 8px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Code block */
+/* Code block nh cho curl */
 .code-small {
   background: #0b1120;
   color: #e2e8f0;
@@ -435,7 +435,7 @@ body {
     </div>
     <div class="stat-item">
       <div class="stat-label">Endpoints</div>
-      <div class="stat-value">2</div>
+      <div class="stat-value">1</div>
     </div>
     <div class="stat-item">
       <div class="stat-label">Status</div>
@@ -443,10 +443,11 @@ body {
     </div>
   </div>
   
-  <!-- Endpoint -->
+  <!-- Endpoint vi ch "gái" và nút GET -->
   <div class="section">
     <div class="section-title">Base Endpoint</div>
     <div class="card">
+      <!-- Hin th ch gái thay vì link dài -->
       <div class="endpoint-display">
         <span class="endpoint-path">/gái</span>
         <a href="/gai" target="_blank" class="method-badge method-get" id="getMethodBtn">
@@ -454,6 +455,7 @@ body {
         </a>
       </div>
       
+      <!-- Hin th link y  dng curl (nh gn) -->
       <div class="code-small">
         <span style="color: #22c55e;">curl</span> -X GET <span style="color: #f97316;">"https://tmk-qzph.onrender.com/gai"</span>
       </div>
@@ -466,17 +468,18 @@ body {
     </div>
   </div>
   
-  <!-- Response Example - FORMAT MI -->
+  <!-- Response Example -->
   <div class="section">
     <div class="section-title">Sample Response</div>
     <div class="card">
       <div class="code-small" style="white-space: pre;">
 {
-  "success": true,
-  "data": [
-    "https://i.pinimg.com/originals/xx/xx/xxx.jpg"
-  ],
-  "count": 147
+  "status": true,
+  "endpoint": "/gai",
+  "image": "https://i.pinimg.com/xxx.jpg",
+  "source": "pinterest",
+  "total_images": 147,
+  "timestamp": 1709123456789
 }
       </div>
     </div>
@@ -504,7 +507,7 @@ body {
   
   <!-- Footer -->
   <div class="footer">
-    <div>© 2026 TMK API · v2.0.0</div>
+    <div>© 2026 TMK API · v1.0.0</div>
     <div>
       <span id="visitCount">0</span> requests today · 
       <span> 30ms cache</span>
@@ -513,13 +516,14 @@ body {
 </div>
 
 <script>
-// Config
+// Config - Ly domain hin ti
 const baseUrl = window.location.origin;
 const apiUrl = baseUrl + "/gai";
 
+// Hin th endpoint path là "/gái" nhng link vn là "/gai"
 document.getElementById('getMethodBtn').href = apiUrl;
 
-// Copy function
+// Copy function - copy link y 
 function copyEndpoint() {
   navigator.clipboard.writeText(apiUrl).then(() => {
     alert(" ã copy: " + apiUrl);
@@ -537,13 +541,12 @@ function toggleMode() {
   }
 }
 
-// Fetch API - X LÝ FORMAT {success, data: [link], count}
+// Fetch API và update stats
 async function fetchRandomImage() {
   const img = document.getElementById('demoImage');
   const loading = document.getElementById('loadingText');
   const responseTimeEl = document.getElementById('responseTime');
   const cacheCountEl = document.getElementById('cacheCount');
-  const apiStatusEl = document.getElementById('apiStatus');
   
   const start = Date.now();
   
@@ -557,28 +560,20 @@ async function fetchRandomImage() {
     const end = Date.now();
     responseTimeEl.textContent = `~${end - start}ms`;
     
-    // X lý format mi: success, data: [link], count
-    if (data.success && data.data && data.data.length > 0) {
-      img.src = data.data[0];
+    if (data.status && data.image) {
+      img.src = data.image;
       img.onload = () => {
         loading.style.display = 'none';
         img.style.display = 'block';
-        apiStatusEl.innerHTML = ' Live';
-        apiStatusEl.style.color = '#22c55e';
       };
       
-      if (data.count) {
-        cacheCountEl.textContent = data.count;
+      if (data.total_images) {
+        cacheCountEl.textContent = data.total_images;
       }
-    } else {
-      throw new Error('Invalid data format');
     }
   } catch (err) {
-    console.error('Fetch error:', err);
     loading.style.display = 'none';
     img.style.display = 'block';
-    apiStatusEl.innerHTML = ' Issues';
-    apiStatusEl.style.color = '#ef4444';
   }
 }
 
