@@ -179,7 +179,7 @@ body {
   box-shadow: 0 4px 6px -2px rgba(0,0,0,0.3);
 }
 
-/* Endpoint display - Hin th ch "gái" thay vì link */
+/* Endpoint display */
 .endpoint-display {
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@ body {
   box-shadow: 0 8px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Code block nh cho curl */
+/* Code block */
 .code-small {
   background: #0b1120;
   color: #e2e8f0;
@@ -443,11 +443,10 @@ body {
     </div>
   </div>
   
-  <!-- Endpoint vi ch "gái" và nút GET -->
+  <!-- Endpoint -->
   <div class="section">
     <div class="section-title">Base Endpoint</div>
     <div class="card">
-      <!-- Hin th ch gái thay vì link dài -->
       <div class="endpoint-display">
         <span class="endpoint-path">/gái</span>
         <a href="/gai" target="_blank" class="method-badge method-get" id="getMethodBtn">
@@ -455,7 +454,6 @@ body {
         </a>
       </div>
       
-      <!-- Hin th link y  dng curl (nh gn) -->
       <div class="code-small">
         <span style="color: #22c55e;">curl</span> -X GET <span style="color: #f97316;">"https://tmk-qzph.onrender.com/gai"</span>
       </div>
@@ -468,7 +466,7 @@ body {
     </div>
   </div>
   
-  <!-- Response Example - ã update format mi -->
+  <!-- Response Example - Ã UPDATE FORMAT MI -->
   <div class="section">
     <div class="section-title">Sample Response</div>
     <div class="card">
@@ -484,7 +482,7 @@ body {
     </div>
   </div>
   
-  <!-- Demo -->
+  <!-- Demo - Ã UPDATE FETCH CHO FORMAT MI -->
   <div class="section">
     <div class="section-title">Live Demo</div>
     <div class="card">
@@ -515,14 +513,13 @@ body {
 </div>
 
 <script>
-// Config - Ly domain hin ti
+// Config
 const baseUrl = window.location.origin;
 const apiUrl = baseUrl + "/gai";
 
-// Hin th endpoint path là "/gái" nhng link vn là "/gai"
 document.getElementById('getMethodBtn').href = apiUrl;
 
-// Copy function - copy link y 
+// Copy function
 function copyEndpoint() {
   navigator.clipboard.writeText(apiUrl).then(() => {
     alert(" ã copy: " + apiUrl);
@@ -540,7 +537,7 @@ function toggleMode() {
   }
 }
 
-// Fetch API và update stats - ã update format mi
+// Fetch API - Ã UPDATE CHO FORMAT {success, data: [link], count}
 async function fetchRandomImage() {
   const img = document.getElementById('demoImage');
   const loading = document.getElementById('loadingText');
@@ -560,7 +557,7 @@ async function fetchRandomImage() {
     const end = Date.now();
     responseTimeEl.textContent = `~${end - start}ms`;
     
-    // X lý format mi
+    // X LÝ FORMAT MI: {success, data: [link], count}
     if (data.success && data.data && data.data.length > 0) {
       img.src = data.data[0];
       img.onload = () => {
@@ -573,20 +570,20 @@ async function fetchRandomImage() {
       if (data.count) {
         cacheCountEl.textContent = data.count;
       }
-    } else {
-      // Fallback cho format c (nu có)
-      if (data.status && data.image) {
-        img.src = data.image;
-        img.onload = () => {
-          loading.style.display = 'none';
-          img.style.display = 'block';
-        };
-        if (data.total_images) {
-          cacheCountEl.textContent = data.total_images;
-        }
-      } else {
-        throw new Error('Invalid data format');
+    } 
+    // Fallback cho format c (nu có)
+    else if (data.status && data.image) {
+      img.src = data.image;
+      img.onload = () => {
+        loading.style.display = 'none';
+        img.style.display = 'block';
+      };
+      if (data.total_images) {
+        cacheCountEl.textContent = data.total_images;
       }
+    }
+    else {
+      throw new Error('Invalid data format');
     }
   } catch (err) {
     console.error('Fetch error:', err);
