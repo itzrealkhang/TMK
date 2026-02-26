@@ -5,21 +5,21 @@ const path = require("path");
 
 const app = express();
 
-// ===== Trang chủ =====
+app.use(express.static(__dirname));
+
+// Trang docs
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ===== API gái =====
+// API gái
 app.get("/gai", async (req, res) => {
   try {
 
     const url = "https://www.pinterest.com/search/pins/?q=gai%20xinh";
 
     const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0"
-      }
+      headers: { "User-Agent": "Mozilla/5.0" }
     });
 
     const $ = cheerio.load(data);
@@ -40,8 +40,7 @@ app.get("/gai", async (req, res) => {
       });
     }
 
-    const random =
-      images[Math.floor(Math.random() * images.length)];
+    const random = images[Math.floor(Math.random() * images.length)];
 
     res.json({
       status: true,
@@ -59,9 +58,5 @@ app.get("/gai", async (req, res) => {
   }
 });
 
-// ===== PORT =====
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(PORT, () => console.log("Server running " + PORT));
