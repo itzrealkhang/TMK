@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TMK API · Documentation</title>
+  <title>TMK API · Enterprise Image Service</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -17,8 +17,8 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: #f0f2f5;
-      color: #1a1f2e;
+      background: #0b0e14;
+      color: #eef2f6;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -26,23 +26,14 @@
       padding: 20px;
     }
 
-    body.dark {
-      background: #0b0e14;
-      color: #eef2f6;
-    }
-
     .docs {
-      max-width: 1200px;
+      max-width: 1280px;
       width: 100%;
-      background: white;
+      background: #111827;
       border-radius: 32px;
       padding: 40px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-    }
-
-    .dark .docs {
-      background: #111827;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      border: 1px solid #1f2937;
     }
 
     /* Header */
@@ -56,7 +47,7 @@
     }
 
     .logo h1 {
-      font-size: 36px;
+      font-size: 42px;
       font-weight: 700;
       letter-spacing: -0.02em;
       background: linear-gradient(135deg, #4f46e5, #ec4899);
@@ -66,100 +57,96 @@
     }
 
     .badge {
-      background: #e2e8f0;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      color: #475569;
-      display: inline-block;
-    }
-
-    .dark .badge {
-      background: #1e293b;
-      color: #94a3b8;
-    }
-
-    /* Theme toggle */
-    .theme-toggle {
       display: flex;
-      gap: 4px;
-      background: #f1f5f9;
-      padding: 4px;
-      border-radius: 40px;
+      gap: 12px;
     }
 
-    .dark .theme-toggle {
+    .badge span {
       background: #1e293b;
-    }
-
-    .theme-btn {
-      padding: 8px 20px;
-      border: none;
-      border-radius: 30px;
-      background: transparent;
-      color: #64748b;
+      padding: 6px 16px;
+      border-radius: 40px;
+      font-size: 13px;
       font-weight: 500;
-      cursor: pointer;
+      color: #94a3b8;
+      border: 1px solid #334155;
     }
 
-    .theme-btn.active {
-      background: white;
-      color: #0f172a;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .dark .theme-btn.active {
-      background: #0f172a;
+    .badge .version {
+      background: #4f46e5;
       color: white;
+      border: none;
     }
 
     /* Hero */
     .hero {
-      margin-bottom: 40px;
+      margin-bottom: 48px;
       padding: 32px;
-      background: linear-gradient(145deg, #f8fafc, #f1f5f9);
-      border-radius: 24px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .dark .hero {
       background: #0f172a;
-      border-color: #1f2937;
+      border-radius: 24px;
+      border: 1px solid #1f2937;
     }
 
     .hero h2 {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 600;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      color: #f1f5f9;
     }
 
     .hero p {
-      color: #475569;
-      line-height: 1.7;
-    }
-
-    .dark .hero p {
       color: #94a3b8;
+      line-height: 1.7;
+      font-size: 16px;
     }
 
-    /* Endpoints */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .stat-card {
+      background: #1a2234;
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid #2a3444;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    /* Endpoints Grid */
     .endpoints {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 24px;
-      margin-bottom: 40px;
+      margin-bottom: 48px;
     }
 
     .endpoint-card {
-      background: white;
+      background: #0f172a;
       border-radius: 24px;
       padding: 28px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #1f2937;
+      transition: 0.3s;
     }
 
-    .dark .endpoint-card {
-      background: #111827;
-      border-color: #1f2937;
+    .endpoint-card:hover {
+      border-color: #4f46e5;
+      transform: translateY(-4px);
+      box-shadow: 0 20px 30px -10px rgba(79,70,229,0.2);
     }
 
     .endpoint-header {
@@ -167,13 +154,12 @@
       align-items: center;
       gap: 16px;
       margin-bottom: 20px;
-      flex-wrap: wrap;
     }
 
     .endpoint-path {
       font-size: 28px;
       font-weight: 700;
-      background: linear-gradient(135deg, #4f46e5, #9333ea);
+      background: linear-gradient(135deg, #4f46e5, #ec4899);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -187,26 +173,31 @@
       color: white;
     }
 
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #4f46e5;
+    .endpoint-desc {
+      color: #94a3b8;
       font-size: 14px;
-      margin: 12px 0;
+      line-height: 1.6;
+      margin-bottom: 20px;
     }
 
-    .dark .meta-item {
+    .keyword-tag {
+      background: #1e293b;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 12px;
       color: #818cf8;
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #334155;
     }
 
-    /* Code block */
     .code-block {
-      background: #0b1120;
+      background: #030712;
       border-radius: 16px;
       padding: 16px;
       margin: 20px 0;
-      font-family: monospace;
+      font-family: 'Monaco', monospace;
       font-size: 13px;
       color: #e2e8f0;
       overflow-x: auto;
@@ -217,7 +208,10 @@
       line-height: 1.8;
     }
 
-    /* Buttons - QUAN TRỌNG: ĐÃ FIX */
+    .code-purple { color: #c084fc; }
+    .code-green { color: #4ade80; }
+    .code-yellow { color: #fde047; }
+
     .actions {
       display: flex;
       gap: 12px;
@@ -226,7 +220,7 @@
     }
 
     .btn {
-      padding: 12px 28px;
+      padding: 12px 24px;
       border-radius: 40px;
       font-weight: 500;
       font-size: 14px;
@@ -253,10 +247,6 @@
       color: white;
     }
 
-    .btn-success:hover {
-      background: #16a34a;
-    }
-
     .btn-outline {
       background: transparent;
       border: 2px solid #4f46e5;
@@ -270,16 +260,11 @@
 
     /* Demo */
     .demo {
-      background: white;
+      background: #0f172a;
       border-radius: 24px;
       padding: 28px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #1f2937;
       margin-bottom: 40px;
-    }
-
-    .dark .demo {
-      background: #111827;
-      border-color: #1f2937;
     }
 
     .demo-header {
@@ -291,28 +276,42 @@
       gap: 16px;
     }
 
+    .demo-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .demo-tab {
+      padding: 8px 24px;
+      border-radius: 40px;
+      background: #1e293b;
+      color: #94a3b8;
+      cursor: pointer;
+      border: 1px solid #334155;
+    }
+
+    .demo-tab.active {
+      background: #4f46e5;
+      color: white;
+      border: none;
+    }
+
     .image-frame {
-      background: #f8fafc;
+      background: #030712;
       border-radius: 20px;
       padding: 20px;
       text-align: center;
-      min-height: 350px;
+      min-height: 400px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px dashed #cbd5e1;
-    }
-
-    .dark .image-frame {
-      background: #0f172a;
-      border-color: #1f2937;
+      border: 2px dashed #1f2937;
     }
 
     .preview-image {
       max-width: 100%;
       max-height: 400px;
       border-radius: 12px;
-      box-shadow: 0 20px 30px -10px rgba(0,0,0,0.2);
     }
 
     .loading {
@@ -326,7 +325,7 @@
     .spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid #e2e8f0;
+      border: 3px solid #1e293b;
       border-top-color: #4f46e5;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -342,15 +341,11 @@
       justify-content: space-between;
       align-items: center;
       padding-top: 32px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #1f2937;
       font-size: 13px;
       color: #64748b;
       flex-wrap: wrap;
       gap: 20px;
-    }
-
-    .dark .footer {
-      border-top-color: #1f2937;
     }
 
     .footer-links {
@@ -358,16 +353,20 @@
       gap: 24px;
     }
 
-    .footer-links button {
-      background: none;
-      border: none;
+    .footer-links a {
       color: #64748b;
+      text-decoration: none;
       cursor: pointer;
-      font-size: 13px;
     }
 
-    .footer-links button:hover {
+    .footer-links a:hover {
       color: #4f46e5;
+    }
+
+    @media (max-width: 1024px) {
+      .endpoints {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 768px) {
@@ -375,8 +374,8 @@
         grid-template-columns: 1fr;
       }
       
-      .docs {
-        padding: 24px;
+      .stats {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -385,87 +384,126 @@
   <div class="docs">
     <!-- Header -->
     <header class="header">
-      <div>
-        <h1 class="logo">TMK API</h1>
-        <span class="badge">v3.0 · powered by Picsum</span>
-      </div>
-      
-      <div class="theme-toggle">
-        <button class="theme-btn active" onclick="setTheme('light')">Light</button>
-        <button class="theme-btn" onclick="setTheme('dark')">Dark</button>
+      <div class="logo">
+        <h1>TMK API</h1>
+        <div class="badge">
+          <span class="version">v8.0.0</span>
+          <span>production</span>
+          <span>3 endpoints</span>
+        </div>
       </div>
     </header>
 
     <!-- Hero -->
     <section class="hero">
-      <h2>Simple · Fast · Reliable</h2>
-      <p>API ảnh ngẫu nhiên từ Picsum, không cần key, cache thông minh, uptime 99.9%.</p>
-    </section>
-
-    <!-- Endpoints -->
-    <div class="endpoints">
-      <!-- Endpoint JSON -->
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="endpoint-path">/gai</span>
-          <span class="method">GET</span>
+      <h2>Enterprise Image API · Pinterest Integration</h2>
+      <p>Hệ thống API cung cấp ảnh chất lượng cao từ Pinterest với 3 danh mục: Gái xinh, Trai đẹp và Cosplay. Tự động cache, uptime 99.9%, không giới hạn request.</p>
+      
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Response Time</div>
+          <div class="stat-value" id="statResponse">~180ms</div>
         </div>
-        
-        <div class="meta-item">
-          <i class="fas fa-code"></i> Content-Type: application/json
+        <div class="stat-card">
+          <div class="stat-label">Cache Size</div>
+          <div class="stat-value" id="statCache">150+</div>
         </div>
-        <div class="meta-item">
-          <i class="fas fa-image"></i> Source: picsum.photos
-        </div>
-
-        <div class="code-block">
-          <span class="code-line">{</span>
-          <span class="code-line">  "success": true,</span>
-          <span class="code-line">  "data": {</span>
-          <span class="code-line">    "url": "https://picsum.photos/id/123/800/600",</span>
-          <span class="code-line">    "id": 123</span>
-          <span class="code-line">  }</span>
-          <span class="code-line">}</span>
-        </div>
-
-        <div class="actions">
-          <!-- Nút COPY - ĐÃ FIX: dùng onclick trực tiếp -->
-          <button class="btn btn-primary" onclick="copyUrl('/gai')">
-            <i class="far fa-copy"></i> Copy URL
-          </button>
-          <!-- Nút GET - ĐÃ FIX: dùng thẻ a -->
-          <a href="/gai" target="_blank" class="btn btn-outline">
-            <i class="fas fa-eye"></i> View JSON
-          </a>
+        <div class="stat-card">
+          <div class="stat-label">Uptime</div>
+          <div class="stat-value">99.9%</div>
         </div>
       </div>
+    </section>
 
-      <!-- Endpoint Redirect -->
+    <!-- Endpoints Grid -->
+    <div class="endpoints">
+      <!-- Gái -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/gái</span>
           <span class="method">GET</span>
         </div>
-        
-        <div class="meta-item">
-          <i class="fas fa-image"></i> Redirect to image
+        <div class="endpoint-desc">
+          Ảnh gái xinh, hot girl, model nữ từ Pinterest
         </div>
-        <div class="meta-item">
-          <i class="fas fa-redo-alt"></i> Auto redirect to random image
+        <div>
+          <span class="keyword-tag">gái xinh</span>
+          <span class="keyword-tag">hot girl</span>
+          <span class="keyword-tag">xinh đẹp</span>
+          <span class="keyword-tag">model nữ</span>
         </div>
-
         <div class="code-block">
-          <span class="code-line"># Get random image directly</span>
-          <span class="code-line">curl -L https://tmk-jade.vercel.app/gái</span>
+          <span class="code-line">{</span>
+          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
+          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
+          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span>,</span>
+          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"gái xinh"</span></span>
+          <span class="code-line">  }</span>
+          <span class="code-line">}</span>
         </div>
-
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('/gái')">
-            <i class="far fa-copy"></i> Copy URL
-          </button>
-          <a href="/gái" target="_blank" class="btn btn-success">
-            <i class="fas fa-external-link-alt"></i> Test
-          </a>
+          <button class="btn btn-primary" onclick="copyUrl('gái')">📋 Copy URL</button>
+          <a href="/gái" target="_blank" class="btn btn-outline">🔍 Test</a>
+        </div>
+      </div>
+
+      <!-- Boy -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/boy</span>
+          <span class="method">GET</span>
+        </div>
+        <div class="endpoint-desc">
+          Ảnh trai đẹp, hot boy, nam thần từ Pinterest
+        </div>
+        <div>
+          <span class="keyword-tag">trai đẹp</span>
+          <span class="keyword-tag">hot boy</span>
+          <span class="keyword-tag">nam thần</span>
+          <span class="keyword-tag">model nam</span>
+        </div>
+        <div class="code-block">
+          <span class="code-line">{</span>
+          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
+          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
+          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span>,</span>
+          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"trai đẹp"</span></span>
+          <span class="code-line">  }</span>
+          <span class="code-line">}</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('boy')">📋 Copy URL</button>
+          <a href="/boy" target="_blank" class="btn btn-outline">🔍 Test</a>
+        </div>
+      </div>
+
+      <!-- Cosplay -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/cosplay</span>
+          <span class="method">GET</span>
+        </div>
+        <div class="endpoint-desc">
+          Ảnh cosplay, anime cosplay, game cosplay từ Pinterest
+        </div>
+        <div>
+          <span class="keyword-tag">cosplay</span>
+          <span class="keyword-tag">cosplay girl</span>
+          <span class="keyword-tag">anime cosplay</span>
+          <span class="keyword-tag">game cosplay</span>
+        </div>
+        <div class="code-block">
+          <span class="code-line">{</span>
+          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
+          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
+          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span>,</span>
+          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"cosplay"</span></span>
+          <span class="code-line">  }</span>
+          <span class="code-line">}</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('cosplay')">📋 Copy URL</button>
+          <a href="/cosplay" target="_blank" class="btn btn-outline">🔍 Test</a>
         </div>
       </div>
     </div>
@@ -476,9 +514,13 @@
         <div>
           <i class="fas fa-eye" style="color: #4f46e5;"></i>
           <span style="margin-left: 8px; font-weight: 600;">Live Demo</span>
-          <span class="badge" style="margin-left: 12px;" id="sourceBadge">picsum</span>
         </div>
-        <button class="btn btn-primary" onclick="fetchImage()">
+        <div class="demo-tabs">
+          <button class="demo-tab active" onclick="switchDemo('gái')">Gái</button>
+          <button class="demo-tab" onclick="switchDemo('boy')">Boy</button>
+          <button class="demo-tab" onclick="switchDemo('cosplay')">Cosplay</button>
+        </div>
+        <button class="btn btn-primary" onclick="refreshDemo()">
           <i class="fas fa-sync-alt"></i> Refresh
         </button>
       </div>
@@ -486,21 +528,25 @@
       <div class="image-frame" id="imageFrame">
         <div class="loading" id="loading" style="display: none;">
           <div class="spinner"></div>
-          <div>Loading from Picsum...</div>
+          <div>Loading from Pinterest...</div>
         </div>
         <img id="preview" class="preview-image" 
-             src="https://picsum.photos/800/600" 
+             src="https://i.imgur.com/Y8Hp6mJ.jpg" 
              alt="Preview"
              style="display: block;">
       </div>
+      <p style="color: #64748b; margin-top: 16px; font-size: 13px; text-align: center;">
+        🔍 Đang xem: <span id="currentDemo">/gái</span> · Keyword: <span id="currentKeyword">gái xinh</span>
+      </p>
     </div>
 
     <!-- Footer -->
     <footer class="footer">
-      <div>© 2026 TMK API</div>
+      <div>© 2026 TMK API · Enterprise Edition</div>
       <div class="footer-links">
-        <button onclick="copyUrl('/gai')">/gai</button>
-        <button onclick="copyUrl('/gái')">/gái</button>
+        <a onclick="copyUrl('gái')">/gái</a>
+        <a onclick="copyUrl('boy')">/boy</a>
+        <a onclick="copyUrl('cosplay')">/cosplay</a>
         <a href="/stats">stats</a>
         <a href="/health">health</a>
       </div>
@@ -512,63 +558,35 @@
 
   <script>
     const baseUrl = window.location.origin;
+    let currentType = 'gái';
 
-    // Hàm copy URL - ĐÃ FIX: copy được, có thông báo
     function copyUrl(endpoint) {
-      const url = baseUrl + endpoint;
+      const url = `${baseUrl}/${endpoint}`;
       navigator.clipboard.writeText(url).then(() => {
-        // Tìm button được click
-        const buttons = document.querySelectorAll('.btn-primary');
-        let clickedBtn = null;
-        for (let btn of buttons) {
-          if (btn.innerHTML.includes('Copy')) {
-            clickedBtn = btn;
-            break;
-          }
-        }
-        
-        if (clickedBtn) {
-          const originalText = clickedBtn.innerHTML;
-          clickedBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-          clickedBtn.style.background = '#22c55e';
-          
-          setTimeout(() => {
-            clickedBtn.innerHTML = originalText;
-            clickedBtn.style.background = '#4f46e5';
-          }, 2000);
-        } else {
-          alert('✅ Copied: ' + url);
-        }
-      }).catch(err => {
-        alert('❌ Copy failed: ' + err);
+        alert(`✅ Copied: ${url}`);
       });
     }
 
-    // Theme
-    function setTheme(theme) {
-      if (theme === 'dark') {
-        document.body.classList.add('dark');
-        document.querySelectorAll('.theme-btn')[0].classList.remove('active');
-        document.querySelectorAll('.theme-btn')[1].classList.add('active');
-      } else {
-        document.body.classList.remove('dark');
-        document.querySelectorAll('.theme-btn')[1].classList.remove('active');
-        document.querySelectorAll('.theme-btn')[0].classList.add('active');
-      }
+    function switchDemo(type) {
+      currentType = type;
+      document.querySelectorAll('.demo-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      refreshDemo();
     }
 
-    // Fetch image từ API
-    async function fetchImage() {
+    async function refreshDemo() {
       const img = document.getElementById('preview');
       const loading = document.getElementById('loading');
-      const sourceBadge = document.getElementById('sourceBadge');
+      const currentDemo = document.getElementById('currentDemo');
+      const currentKeyword = document.getElementById('currentKeyword');
       
       loading.style.display = 'flex';
       img.style.display = 'none';
       
       try {
-        // Gọi API /gai để lấy URL ảnh
-        const res = await fetch(`${baseUrl}/gai`);
+        const res = await fetch(`${baseUrl}/${currentType}`);
         const data = await res.json();
         
         if (data.success && data.data?.url) {
@@ -577,12 +595,8 @@
             loading.style.display = 'none';
             img.style.display = 'block';
           };
-          
-          sourceBadge.textContent = data.meta?.source || 'picsum';
-          
-          // Update request count
-          const countEl = document.getElementById('requestCount');
-          countEl.textContent = parseInt(countEl.textContent) + 1;
+          currentDemo.textContent = `/${currentType}`;
+          currentKeyword.textContent = data.data.keyword || 'đang tải...';
         }
       } catch (err) {
         console.error(err);
@@ -590,9 +604,6 @@
         img.style.display = 'block';
       }
     }
-
-    // Load ảnh đầu tiên
-    window.addEventListener('load', fetchImage);
 
     // Request counter
     if (localStorage.getItem('tmkCount')) {
@@ -603,6 +614,21 @@
       localStorage.setItem('tmkCount', '1');
       document.getElementById('requestCount').textContent = '1';
     }
+
+    // Auto refresh stats
+    setInterval(async () => {
+      try {
+        const res = await fetch(`${baseUrl}/stats`);
+        const data = await res.json();
+        if (data.success) {
+          const total = data.data.cacheSize.gai + data.data.cacheSize.boy + data.data.cacheSize.cosplay;
+          document.getElementById('statCache').textContent = total + '+';
+        }
+      } catch (e) {}
+    }, 5000);
+
+    // Load initial image
+    window.addEventListener('load', refreshDemo);
   </script>
 </body>
 </html>
