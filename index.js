@@ -1,16 +1,29 @@
 const express = require("express");
 const axios = require("axios");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 
 app.use(express.static(__dirname));
+
+// Đọc file JSON video
+let videoUrls = [];
+try {
+  const videoData = fs.readFileSync(path.join(__dirname, "vdgai.json"), "utf8");
+  videoUrls = JSON.parse(videoData);
+  console.log(`✅ Đã load ${videoUrls.length} video từ vdgai.json`);
+} catch (err) {
+  console.error("❌ Lỗi đọc file vdgai.json:", err.message);
+  videoUrls = [];
+}
 
 // Cache cho từng loại
 let cache = {
   girl: { images: [], lastFetch: 0 },
   boy: { images: [], lastFetch: 0 },
   cosplay: { images: [], lastFetch: 0 },
+  vdgai: { videos: videoUrls, lastFetch: Date.now() },
   ttl: 30 * 60 * 1000, // 30 phút
   stats: {
     requests: 0,
@@ -18,10 +31,10 @@ let cache = {
   }
 };
 
-// Keywords cho từng loại - CHUẨN
+// Keywords cho từng loại
 const KEYWORDS = {
   girl: ["gái xinh", "gái cute"],
-  boy: ["boy", "trai đẹp", "cute boy", "trai 6 múi"],
+  boy: ["boy", "trai đẹp", "boy", "trai 6 múi"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay", "cosplay vietnam", "cosplay asian"]
 };
 
@@ -37,9 +50,9 @@ app.get("/", (req, res) => {
 });
 
 /**
- * Hàm Pinterest CHUẨN - Copy từ code Zalo Bot (đã fix lỗi tìm ảnh)
+ * Hàm Pinterest CHUẨN - Tìm ảnh theo keyword
  */
-async function searchPinterestImages(query, limit = 30) {
+async function searchPinterestImages(query, limit = 50) {
   try {
     const encodedQuery = encodeURIComponent(query);
     const searchUrl = `https://www.pinterest.com/resource/BaseSearchResource/get/`;
@@ -107,13 +120,12 @@ async function searchPinterestImages(query, limit = 30) {
 }
 
 /**
- * Hàm xử lý chung cho các endpoint
+ * Hàm xử lý chung cho các endpoint ảnh
  */
 async function handleImageEndpoint(req, res, type, keywordList) {
   try {
     const cacheData = cache[type];
     
-    // Random keyword từ list
     const randomKeyword = keywordList[Math.floor(Math.random() * keywordList.length)];
     
     // Check cache
@@ -130,16 +142,16 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         },
         meta: {
           endpoint: `/${type}`,
+          type: "image",
           source: "pinterest",
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "11.0.0"
+          version: "12.0.0"
         }
       });
     }
 
-    // Gọi Pinterest
     console.log(`🔄 Đang tìm ảnh ${type} với keyword: ${randomKeyword}`);
     const images = await searchPinterestImages(randomKeyword, 50);
 
@@ -158,15 +170,15 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         },
         meta: {
           endpoint: `/${type}`,
+          type: "image",
           source: "pinterest",
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "11.0.0"
+          version: "12.0.0"
         }
       });
     } else {
-      // Fallback images
       const fallbackImages = {
         girl: "https://i.imgur.com/Y8Hp6mJ.jpg",
         boy: "https://i.imgur.com/7U6V4cK.jpg",
@@ -182,6 +194,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         },
         meta: {
           endpoint: `/${type}`,
+          type: "image",
           source: "fallback",
           total: 1,
           timestamp: Date.now()
@@ -200,6 +213,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
       },
       meta: {
         endpoint: `/${type}`,
+        type: "image",
         source: "error",
         timestamp: Date.now()
       }
@@ -207,47 +221,91 @@ async function handleImageEndpoint(req, res, type, keywordList) {
   }
 }
 
-// ==================== ENDPOINTS CHÍNH ====================
+// ==================== ENDPOINTS ẢNH ====================
 
-// Endpoint GIRL
 app.get("/girl", (req, res) => handleImageEndpoint(req, res, "girl", KEYWORDS.girl));
-
-// Endpoint BOY
 app.get("/boy", (req, res) => handleImageEndpoint(req, res, "boy", KEYWORDS.boy));
-
-// Endpoint COSPLAY
 app.get("/cosplay", (req, res) => handleImageEndpoint(req, res, "cosplay", KEYWORDS.cosplay));
 
-// Endpoint cũ - redirect sang girl (giữ để tương thích)
+// Endpoint cũ - redirect
 app.get("/gai", (req, res) => res.redirect("/girl"));
 app.get("/gái", (req, res) => res.redirect("/girl"));
 
-// ==================== REDIRECT ẢNH TRỰC TIẾP ====================
+// ==================== ENDPOINT VIDEO GÁI ====================
 
-app.get("/image/:type", async (req, res) => {
-  const { type } = req.params;
-  if (!["girl", "boy", "cosplay"].includes(type)) {
-    return res.redirect("/");
+app.get("/vdgai", (req, res) => {
+  try {
+    const videoCache = cache.vdgai;
+    
+    if (videoCache.videos.length === 0) {
+      return res.json({
+        success: false,
+        error: "Không có video nào",
+        meta: {
+          endpoint: "/vdgai",
+          timestamp: Date.now()
+        }
+      });
+    }
+
+    cache.stats.hits++;
+    
+    const randomVideo = videoCache.videos[Math.floor(Math.random() * videoCache.videos.length)];
+    
+    res.json({
+      success: true,
+      data: {
+        url: randomVideo,
+        id: Math.random().toString(36).substring(7),
+        title: "Video gái xinh"
+      },
+      meta: {
+        endpoint: "/vdgai",
+        type: "video",
+        source: "json",
+        total: videoCache.videos.length,
+        timestamp: Date.now(),
+        version: "12.0.0"
+      }
+    });
+
+  } catch (err) {
+    console.error("Lỗi video:", err);
+    res.json({
+      success: false,
+      error: err.message,
+      meta: {
+        endpoint: "/vdgai",
+        timestamp: Date.now()
+      }
+    });
   }
-  
-  const cacheData = cache[type];
-  
-  if (cacheData.images.length > 0) {
-    const random = cacheData.images[Math.floor(Math.random() * cacheData.images.length)];
-    return res.redirect(random);
+});
+
+// Endpoint redirect video trực tiếp
+app.get("/vdgai/redirect", (req, res) => {
+  if (cache.vdgai.videos.length > 0) {
+    const randomVideo = cache.vdgai.videos[Math.floor(Math.random() * cache.vdgai.videos.length)];
+    return res.redirect(randomVideo);
   }
-  
-  const fallbackImages = {
-    girl: "https://i.imgur.com/Y8Hp6mJ.jpg",
-    boy: "https://i.imgur.com/7U6V4cK.jpg",
-    cosplay: "https://i.imgur.com/8QqZqZq.jpg"
-  };
-  res.redirect(fallbackImages[type] || "https://i.imgur.com/Y8Hp6mJ.jpg");
+  res.redirect("https://i.imgur.com/Y8Hp6mJ.jpg");
+});
+
+// Endpoint danh sách video
+app.get("/vdgai/list", (req, res) => {
+  res.json({
+    success: true,
+    data: cache.vdgai.videos.slice(0, 20),
+    total: cache.vdgai.videos.length,
+    meta: {
+      endpoint: "/vdgai/list",
+      timestamp: Date.now()
+    }
+  });
 });
 
 // ==================== UTILITY ENDPOINTS ====================
 
-// Stats
 app.get("/stats", (req, res) => {
   res.json({
     success: true,
@@ -257,10 +315,11 @@ app.get("/stats", (req, res) => {
       cacheSize: {
         girl: cache.girl.images.length,
         boy: cache.boy.images.length,
-        cosplay: cache.cosplay.images.length
+        cosplay: cache.cosplay.images.length,
+        vdgai: cache.vdgai.videos.length
       },
       uptime: process.uptime(),
-      version: "11.0.0"
+      version: "12.0.0"
     },
     meta: {
       timestamp: Date.now()
@@ -268,13 +327,12 @@ app.get("/stats", (req, res) => {
   });
 });
 
-// Health
 app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "11.0.0",
-    endpoints: ["/girl", "/boy", "/cosplay", "/stats", "/health"]
+    version: "12.0.0",
+    endpoints: ["/girl", "/boy", "/cosplay", "/vdgai", "/vdgai/redirect", "/vdgai/list", "/stats", "/health"]
   });
 });
 
@@ -282,16 +340,19 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════╗
-║        TMK API v11.0               ║
+║        TMK API v12.0               ║
 ╠════════════════════════════════════╣
-║  🚀 Endpoints:                     ║
+║  📸 Image Endpoints:               ║
 ║  ├─ /girl    → Girl images         ║
 ║  ├─ /boy     → Boy images          ║
-║  ├─ /cosplay → Cosplay images      ║
-║  ├─ /stats   → Statistics          ║
-║  └─ /health  → Health check        ║
+║  └─ /cosplay → Cosplay images      ║
 ╠════════════════════════════════════╣
-║  📦 Port: ${PORT}                         ║
+║  🎬 Video Endpoints:               ║
+║  ├─ /vdgai        → Random video   ║
+║  ├─ /vdgai/redirect → Direct video ║
+║  └─ /vdgai/list   → Video list     ║
+╠════════════════════════════════════╣
+║  📦 Total videos: ${cache.vdgai.videos.length}               ║
 ║  ⚡ Status: ✅ Running              ║
 ╚════════════════════════════════════╝
   `);
