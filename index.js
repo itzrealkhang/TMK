@@ -20,8 +20,8 @@ let cache = {
 
 // Keywords cho từng loại - CHUẨN
 const KEYWORDS = {
-  girl: ["girl", "beautiful girl", "cute girl", "asian girl", "model girl", "pretty woman"],
-  boy: ["boy", "handsome boy", "cute boy", "asian boy", "model boy", "handsome man"],
+  girl: ["gái xinh", "gái cute"],
+  boy: ["boy", "trai đẹp", "cute boy", "trai 6 múi"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay", "cosplay vietnam", "cosplay asian"]
 };
 
