@@ -18,7 +18,7 @@ let cache = {
   }
 };
 
-// Keywords cho từng loại - ĐÃ XÓA "GÁI XINH"
+// Keywords cho từng loại - CHUẨN
 const KEYWORDS = {
   girl: ["girl", "beautiful girl", "cute girl", "asian girl", "model girl", "pretty woman"],
   boy: ["boy", "handsome boy", "cute boy", "asian boy", "model boy", "handsome man"],
@@ -37,9 +37,9 @@ app.get("/", (req, res) => {
 });
 
 /**
- * Hàm Pinterest CHUẨN - Tìm ảnh theo keyword
+ * Hàm Pinterest CHUẨN - Copy từ code Zalo Bot (đã fix lỗi tìm ảnh)
  */
-async function searchPinterestImages(query, limit = 50) {
+async function searchPinterestImages(query, limit = 30) {
   try {
     const encodedQuery = encodeURIComponent(query);
     const searchUrl = `https://www.pinterest.com/resource/BaseSearchResource/get/`;
@@ -63,6 +63,7 @@ async function searchPinterestImages(query, limit = 50) {
       "x-pinterest-appstate": "active",
       "x-pinterest-source-url": `/search/pins/?q=${encodedQuery}&rs=typed`,
       "x-requested-with": "XMLHttpRequest",
+      "x-pinterest-pws-handler": "www/search/[scope].js",
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     };
@@ -133,7 +134,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "10.0.0"
+          version: "11.0.0"
         }
       });
     }
@@ -161,7 +162,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "10.0.0"
+          version: "11.0.0"
         }
       });
     } else {
@@ -259,7 +260,7 @@ app.get("/stats", (req, res) => {
         cosplay: cache.cosplay.images.length
       },
       uptime: process.uptime(),
-      version: "10.0.0"
+      version: "11.0.0"
     },
     meta: {
       timestamp: Date.now()
@@ -272,7 +273,7 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "10.0.0",
+    version: "11.0.0",
     endpoints: ["/girl", "/boy", "/cosplay", "/stats", "/health"]
   });
 });
@@ -281,7 +282,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════╗
-║        TMK API v10.0               ║
+║        TMK API v11.0               ║
 ╠════════════════════════════════════╣
 ║  🚀 Endpoints:                     ║
 ║  ├─ /girl    → Girl images         ║
