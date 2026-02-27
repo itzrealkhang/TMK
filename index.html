@@ -127,7 +127,7 @@
 
     .endpoints {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 24px;
       margin-bottom: 48px;
     }
@@ -154,11 +154,12 @@
     }
 
     .endpoint-path {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 700;
       background: linear-gradient(135deg, #4f46e5, #ec4899);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      word-break: break-word;
     }
 
     .method {
@@ -199,7 +200,7 @@
       padding: 16px;
       margin: 20px 0;
       font-family: 'Monaco', monospace;
-      font-size: 13px;
+      font-size: 12px;
       color: #e2e8f0;
       overflow-x: auto;
     }
@@ -214,21 +215,21 @@
 
     .actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
       margin-top: 20px;
     }
 
     .btn {
-      padding: 12px 24px;
+      padding: 10px 18px;
       border-radius: 40px;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
       border: none;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       text-decoration: none;
       transition: 0.2s;
     }
@@ -295,13 +296,14 @@
     }
 
     .demo-tab {
-      padding: 8px 24px;
+      padding: 8px 20px;
       border-radius: 40px;
       background: #1e293b;
       color: #94a3b8;
       cursor: pointer;
       border: 1px solid #334155;
       font-weight: 500;
+      font-size: 14px;
       transition: 0.2s;
     }
 
@@ -392,7 +394,13 @@
       color: #4f46e5;
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 1200px) {
+      .endpoints {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
       .endpoints {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -415,8 +423,8 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v13.0.0</span>
-          <span>4 endpoints</span>
+          <span class="version">v14.0.0</span>
+          <span>5 endpoints</span>
           <span>images + videos</span>
         </div>
       </div>
@@ -424,7 +432,7 @@
 
     <section class="hero">
       <h2>Professional Image & Video API</h2>
-      <p>High-quality images from Pinterest and video collection from JSON. Automatic caching, 99.9% uptime, unlimited requests.</p>
+      <p>High-quality images from Pinterest and video collection from JSON. New URL structure: /image/type and /video/type</p>
       
       <div class="stats">
         <div class="stat-card">
@@ -433,7 +441,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-label">Cache Size</div>
-          <div class="stat-value" id="statCache">150+</div>
+          <div class="stat-value" id="statCache">200+</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Videos</div>
@@ -450,85 +458,91 @@
       <!-- Girl -->
       <div class="endpoint-card">
         <div class="endpoint-header">
-          <span class="endpoint-path">/girl</span>
+          <span class="endpoint-path">/image/girl</span>
           <span class="method">GET</span>
         </div>
-        <div class="endpoint-desc">Beautiful girls, models, asian girls from Pinterest</div>
+        <div class="endpoint-desc">Beautiful girls, models, asian girls</div>
         <div>
           <span class="keyword-tag">girl</span>
           <span class="keyword-tag">beautiful</span>
           <span class="keyword-tag">asian girl</span>
         </div>
         <div class="code-block">
-          <span class="code-line">{</span>
-          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
-          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
-          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span></span>
-          <span class="code-line">  }</span>
-          <span class="code-line">}</span>
+          <span class="code-line">GET /image/girl</span>
         </div>
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('girl')">📋 Copy</button>
-          <button class="btn btn-outline" onclick="testEndpoint('girl')">🔍 Test</button>
+          <button class="btn btn-primary" onclick="copyUrl('image/girl')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('image/girl')">🔍 Test</button>
         </div>
       </div>
 
       <!-- Boy -->
       <div class="endpoint-card">
         <div class="endpoint-header">
-          <span class="endpoint-path">/boy</span>
+          <span class="endpoint-path">/image/boy</span>
           <span class="method">GET</span>
         </div>
-        <div class="endpoint-desc">Handsome boys, models, asian boys from Pinterest</div>
+        <div class="endpoint-desc">Handsome boys, models, asian boys</div>
         <div>
           <span class="keyword-tag">boy</span>
           <span class="keyword-tag">handsome</span>
           <span class="keyword-tag">asian boy</span>
         </div>
         <div class="code-block">
-          <span class="code-line">{</span>
-          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
-          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
-          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span></span>
-          <span class="code-line">  }</span>
-          <span class="code-line">}</span>
+          <span class="code-line">GET /image/boy</span>
         </div>
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('boy')">📋 Copy</button>
-          <button class="btn btn-outline" onclick="testEndpoint('boy')">🔍 Test</button>
+          <button class="btn btn-primary" onclick="copyUrl('image/boy')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('image/boy')">🔍 Test</button>
         </div>
       </div>
 
       <!-- Cosplay -->
       <div class="endpoint-card">
         <div class="endpoint-header">
-          <span class="endpoint-path">/cosplay</span>
+          <span class="endpoint-path">/image/cosplay</span>
           <span class="method">GET</span>
         </div>
-        <div class="endpoint-desc">Cosplay, anime, game characters from Pinterest</div>
+        <div class="endpoint-desc">Cosplay, anime, game characters</div>
         <div>
           <span class="keyword-tag">cosplay</span>
           <span class="keyword-tag">anime</span>
           <span class="keyword-tag">game</span>
         </div>
         <div class="code-block">
-          <span class="code-line">{</span>
-          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
-          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
-          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span></span>
-          <span class="code-line">  }</span>
-          <span class="code-line">}</span>
+          <span class="code-line">GET /image/cosplay</span>
         </div>
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('cosplay')">📋 Copy</button>
-          <button class="btn btn-outline" onclick="testEndpoint('cosplay')">🔍 Test</button>
+          <button class="btn btn-primary" onclick="copyUrl('image/cosplay')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('image/cosplay')">🔍 Test</button>
+        </div>
+      </div>
+
+      <!-- Anime -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/image/anime</span>
+          <span class="method">GET</span>
+        </div>
+        <div class="endpoint-desc">Anime, manga, waifu, cute anime</div>
+        <div>
+          <span class="keyword-tag">anime</span>
+          <span class="keyword-tag">manga</span>
+          <span class="keyword-tag">waifu</span>
+        </div>
+        <div class="code-block">
+          <span class="code-line">GET /image/anime</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('image/anime')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('image/anime')">🔍 Test</button>
         </div>
       </div>
 
       <!-- Video Gái -->
       <div class="endpoint-card">
         <div class="endpoint-header">
-          <span class="endpoint-path">/vdgai</span>
+          <span class="endpoint-path">/video/vdgai</span>
           <span class="method video">GET</span>
         </div>
         <div class="endpoint-desc">Video collection from JSON (450+ videos)</div>
@@ -538,21 +552,16 @@
           <span class="keyword-tag">collection</span>
         </div>
         <div class="code-block">
-          <span class="code-line">{</span>
-          <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
-          <span class="code-line">  <span class="code-green">"data"</span>: {</span>
-          <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.imgur.com/xxx.mp4"</span></span>
-          <span class="code-line">  }</span>
-          <span class="code-line">}</span>
+          <span class="code-line">GET /video/vdgai</span>
         </div>
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('vdgai')">📋 Copy</button>
-          <a href="/vdgai/redirect" target="_blank" class="btn btn-pink">▶️ Watch</a>
+          <button class="btn btn-primary" onclick="copyUrl('video/vdgai')">📋 Copy</button>
+          <a href="/video/vdgai/redirect" target="_blank" class="btn btn-pink">▶️ Watch</a>
         </div>
       </div>
     </div>
 
-    <!-- LIVE DEMO - ĐÃ FIX -->
+    <!-- LIVE DEMO -->
     <div class="demo">
       <div class="demo-header">
         <div>
@@ -560,10 +569,11 @@
           <span style="margin-left: 8px; font-weight: 600;">Live Demo</span>
         </div>
         <div class="demo-tabs">
-          <button class="demo-tab active" data-type="girl" onclick="switchDemo('girl')">Girl</button>
-          <button class="demo-tab" data-type="boy" onclick="switchDemo('boy')">Boy</button>
-          <button class="demo-tab" data-type="cosplay" onclick="switchDemo('cosplay')">Cosplay</button>
-          <button class="demo-tab video" data-type="vdgai" onclick="switchDemo('vdgai')">Video</button>
+          <button class="demo-tab active" data-type="image/girl" onclick="switchDemo('image/girl')">Girl</button>
+          <button class="demo-tab" data-type="image/boy" onclick="switchDemo('image/boy')">Boy</button>
+          <button class="demo-tab" data-type="image/cosplay" onclick="switchDemo('image/cosplay')">Cosplay</button>
+          <button class="demo-tab" data-type="image/anime" onclick="switchDemo('image/anime')">Anime</button>
+          <button class="demo-tab video" data-type="video/vdgai" onclick="switchDemo('video/vdgai')">Video</button>
         </div>
         <button class="btn btn-primary" onclick="refreshDemo()">
           <i class="fas fa-sync-alt"></i> Refresh
@@ -581,7 +591,7 @@
              style="display: block;">
       </div>
       <p style="color: #64748b; margin-top: 16px; font-size: 13px; text-align: center;">
-        🔍 Endpoint: <span id="currentEndpoint">/girl</span> · 
+        🔍 Endpoint: <span id="currentEndpoint">/image/girl</span> · 
         Keyword: <span id="currentKeyword">girl</span>
       </p>
     </div>
@@ -589,10 +599,11 @@
     <footer class="footer">
       <div>© 2026 TMK API · Images & Videos</div>
       <div class="footer-links">
-        <a onclick="copyUrl('girl')">/girl</a>
-        <a onclick="copyUrl('boy')">/boy</a>
-        <a onclick="copyUrl('cosplay')">/cosplay</a>
-        <a onclick="copyUrl('vdgai')">/vdgai</a>
+        <a onclick="copyUrl('image/girl')">/image/girl</a>
+        <a onclick="copyUrl('image/boy')">/image/boy</a>
+        <a onclick="copyUrl('image/cosplay')">/image/cosplay</a>
+        <a onclick="copyUrl('image/anime')">/image/anime</a>
+        <a onclick="copyUrl('video/vdgai')">/video/vdgai</a>
         <a href="/stats">stats</a>
       </div>
       <div>
@@ -603,9 +614,8 @@
 
   <script>
     const baseUrl = window.location.origin;
-    let currentType = 'girl';
+    let currentType = 'image/girl';
 
-    // Copy URL
     function copyUrl(endpoint) {
       const url = `${baseUrl}/${endpoint}`;
       navigator.clipboard.writeText(url).then(() => {
@@ -613,38 +623,31 @@
       });
     }
 
-    // Test endpoint
     function testEndpoint(endpoint) {
       window.open(`${baseUrl}/${endpoint}`, '_blank');
     }
 
-    // Switch tab - ĐÃ FIX
     function switchDemo(type) {
       currentType = type;
       
-      // Update active tab
       document.querySelectorAll('.demo-tab').forEach(tab => {
         tab.classList.remove('active');
       });
       document.querySelector(`.demo-tab[data-type="${type}"]`).classList.add('active');
       
-      // Fetch new content
       fetchAndDisplay(type);
     }
 
-    // Refresh button - ĐÃ FIX
     function refreshDemo() {
       fetchAndDisplay(currentType);
     }
 
-    // Hàm fetch và hiển thị - ĐÃ FIX
     async function fetchAndDisplay(type) {
       const loading = document.getElementById('loading');
       const imageFrame = document.getElementById('imageFrame');
       const currentEndpoint = document.getElementById('currentEndpoint');
       const currentKeyword = document.getElementById('currentKeyword');
       
-      // Hiện loading
       loading.style.display = 'flex';
       
       try {
@@ -652,8 +655,7 @@
         const data = await res.json();
         
         if (data.success && data.data?.url) {
-          if (type === 'vdgai') {
-            // Video
+          if (type === 'video/vdgai') {
             imageFrame.innerHTML = `
               <div class="loading" id="loading" style="display: none;">
                 <div class="spinner"></div>
@@ -665,7 +667,6 @@
               </video>
             `;
           } else {
-            // Image
             imageFrame.innerHTML = `
               <div class="loading" id="loading" style="display: none;">
                 <div class="spinner"></div>
@@ -675,9 +676,8 @@
             `;
           }
           
-          // Cập nhật thông tin
           currentEndpoint.textContent = `/${type}`;
-          currentKeyword.textContent = data.data.keyword || data.data.title || type;
+          currentKeyword.textContent = data.data.keyword || data.data.title || type.split('/')[1];
         }
       } catch (err) {
         console.error(err);
@@ -689,13 +689,11 @@
           <img id="preview" class="preview-image" src="https://i.imgur.com/Y8Hp6mJ.jpg" alt="Preview">
         `;
       } finally {
-        // Ẩn loading
         const newLoading = document.getElementById('loading');
         if (newLoading) newLoading.style.display = 'none';
       }
     }
 
-    // Request counter
     if (localStorage.getItem('tmkCount')) {
       let count = parseInt(localStorage.getItem('tmkCount')) + 1;
       localStorage.setItem('tmkCount', count);
@@ -705,21 +703,20 @@
       document.getElementById('requestCount').textContent = '1';
     }
 
-    // Auto refresh stats
     setInterval(async () => {
       try {
         const res = await fetch(`${baseUrl}/stats`);
         const data = await res.json();
         if (data.success) {
-          const total = data.data.cacheSize.girl + data.data.cacheSize.boy + data.data.cacheSize.cosplay;
+          const total = data.data.cacheSize.girl + data.data.cacheSize.boy + 
+                        data.data.cacheSize.cosplay + data.data.cacheSize.anime;
           document.getElementById('statCache').textContent = total + '+';
           document.getElementById('statVideos').textContent = data.data.cacheSize.vdgai + '+';
         }
       } catch (e) {}
     }, 5000);
 
-    // Load initial image
-    window.addEventListener('load', () => fetchAndDisplay('girl'));
+    window.addEventListener('load', () => fetchAndDisplay('image/girl'));
   </script>
 </body>
 </html>
