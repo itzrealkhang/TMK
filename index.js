@@ -3,6 +3,9 @@ const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
 
+// Import handler Gura
+const { handleGura } = require("./gura.js");
+
 // Khởi tạo app
 const app = express();
 
@@ -12,7 +15,7 @@ app.use(express.json());
 
 // ==================== KIỂM TRA MÔI TRƯỜNG ====================
 const isVercel = process.env.VERCEL === "1";
-console.log(`🚀 TMK API v1.2.5 chạy trên: ${isVercel ? 'Vercel' : 'Local'}`);
+console.log(`🚀 TMK API v1.2.8 chạy trên: ${isVercel ? 'Vercel' : 'Local'}`);
 
 // ==================== ĐỌC FILE VIDEO ====================
 
@@ -33,6 +36,7 @@ let cache = {
   boy: { images: [], lastFetch: 0 },
   cosplay: { images: [], lastFetch: 0 },
   anime: { images: [], lastFetch: 0 },
+  gura: { images: [], lastFetch: 0 },
   vdgai: { videos: videoUrls, lastFetch: Date.now() },
   ttl: 30 * 60 * 1000, // 30 phút
   stats: {
@@ -154,7 +158,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "1.2.5"
+          version: "1.2.8"
         }
       });
     }
@@ -182,7 +186,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "1.2.5"
+          version: "1.2.8"
         }
       });
     } else {
@@ -191,7 +195,8 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         girl: "https://i.imgur.com/Y8Hp6mJ.jpg",
         boy: "https://i.imgur.com/7U6V4cK.jpg",
         cosplay: "https://i.imgur.com/8QqZqZq.jpg",
-        anime: "https://i.imgur.com/8QqZqZq.jpg"
+        anime: "https://i.imgur.com/8QqZqZq.jpg",
+        gura: "https://i.imgur.com/8QqZqZq.jpg"
       };
       
       res.json({
@@ -207,7 +212,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           source: "fallback",
           total: 1,
           timestamp: Date.now(),
-          version: "1.2.5"
+          version: "1.2.8"
         }
       });
     }
@@ -225,7 +230,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         category: "image",
         source: "error",
         timestamp: Date.now(),
-        version: "1.2.5"
+        version: "1.2.8"
       }
     });
   }
@@ -244,7 +249,7 @@ app.get("/vdgai", (req, res) => {
         meta: { 
           endpoint: "/vdgai", 
           timestamp: Date.now(), 
-          version: "1.2.5" 
+          version: "1.2.8" 
         }
       });
     }
@@ -265,7 +270,7 @@ app.get("/vdgai", (req, res) => {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "1.2.5"
+        version: "1.2.8"
       }
     });
   } catch (err) {
@@ -276,7 +281,7 @@ app.get("/vdgai", (req, res) => {
       meta: { 
         endpoint: "/vdgai", 
         timestamp: Date.now(), 
-        version: "1.2.5" 
+        version: "1.2.8" 
       }
     });
   }
@@ -289,6 +294,9 @@ app.get("/girl", (req, res) => handleImageEndpoint(req, res, "girl", KEYWORDS.gi
 app.get("/boy", (req, res) => handleImageEndpoint(req, res, "boy", KEYWORDS.boy));
 app.get("/cosplay", (req, res) => handleImageEndpoint(req, res, "cosplay", KEYWORDS.cosplay));
 app.get("/anime", (req, res) => handleImageEndpoint(req, res, "anime", KEYWORDS.anime));
+
+// Endpoint GURA mới
+app.get("/gura", (req, res) => handleGura(req, res, cache, searchPinterestImages));
 
 // ==================== UTILITY ENDPOINTS ====================
 
@@ -303,15 +311,16 @@ app.get("/stats", (req, res) => {
         boy: cache.boy.images.length,
         cosplay: cache.cosplay.images.length,
         anime: cache.anime.images.length,
+        gura: cache.gura?.images.length || 0,
         vdgai: cache.vdgai.videos.length
       },
       uptime: process.uptime(),
-      version: "1.2.5",
+      version: "1.2.8",
       environment: isVercel ? "vercel" : "local"
     },
     meta: { 
       timestamp: Date.now(), 
-      version: "1.2.5" 
+      version: "1.2.8" 
     }
   });
 });
@@ -320,9 +329,9 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "1.2.5",
+    version: "1.2.8",
     environment: isVercel ? "vercel" : "local",
-    endpoints: ["/girl", "/boy", "/cosplay", "/anime", "/vdgai", "/stats", "/health"]
+    endpoints: ["/girl", "/boy", "/cosplay", "/anime", "/gura", "/vdgai", "/stats", "/health"]
   });
 });
 
@@ -330,14 +339,15 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║           TMK API v1.2.5                 ║
+║           TMK API v1.2.8                 ║
 ║        Professional Image & Video        ║
 ╠══════════════════════════════════════════╣
 ║  📸 Image Endpoints:                      ║
 ║  ├─ /girl     → Beautiful girls          ║
 ║  ├─ /boy      → Handsome boys            ║
 ║  ├─ /cosplay  → Cosplay characters       ║
-║  └─ /anime    → Anime & manga            ║
+║  ├─ /anime    → Anime & manga            ║
+║  └─ /gura     🦈 Gawr Gura images        ║
 ╠══════════════════════════════════════════╣
 ║  🎬 Video Endpoints:                      ║
 ║  └─ /vdgai    → Video collection         ║

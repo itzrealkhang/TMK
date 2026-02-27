@@ -26,9 +26,8 @@
       padding: 20px;
     }
 
-    /* Glassmorphism Container */
     .container {
-      max-width: 1300px;
+      max-width: 1400px;
       width: 100%;
       background: rgba(20, 25, 40, 0.8);
       backdrop-filter: blur(20px);
@@ -40,7 +39,6 @@
       border: 1px solid rgba(255, 255, 255, 0.03);
     }
 
-    /* Header */
     .header {
       display: flex;
       justify-content: space-between;
@@ -81,7 +79,6 @@
       border: none;
     }
 
-    /* Hero Section */
     .hero {
       margin-bottom: 60px;
       padding: 40px;
@@ -107,10 +104,9 @@
       margin-bottom: 30px;
     }
 
-    /* Stats Grid */
     .stats {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 20px;
     }
 
@@ -149,7 +145,6 @@
       margin-left: 4px;
     }
 
-    /* Endpoints Grid */
     .section-title {
       font-size: 24px;
       font-weight: 700;
@@ -167,7 +162,7 @@
 
     .endpoints {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 24px;
       margin-bottom: 40px;
     }
@@ -238,6 +233,7 @@
       font-size: 14px;
       line-height: 1.6;
       margin-bottom: 20px;
+      min-height: 60px;
     }
 
     .keyword-tag {
@@ -319,7 +315,6 @@
       transform: translateY(-2px);
     }
 
-    /* Live Demo */
     .demo {
       background: rgba(0, 0, 0, 0.2);
       border-radius: 32px;
@@ -426,7 +421,6 @@
       color: #4f46e5;
     }
 
-    /* Footer */
     .footer {
       display: flex;
       justify-content: space-between;
@@ -455,7 +449,6 @@
       color: #4f46e5;
     }
 
-    /* Responsive */
     @media (max-width: 1200px) {
       .endpoints, .stats {
         grid-template-columns: repeat(3, 1fr);
@@ -485,22 +478,20 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <header class="header">
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v1.2.5</span>
+          <span class="version">v1.2.8</span>
           <span><i class="far fa-clock"></i> 30min cache</span>
           <span><i class="fas fa-bolt"></i> 99.9% uptime</span>
         </div>
       </div>
     </header>
 
-    <!-- Hero -->
     <section class="hero">
       <h2>Professional Image & Video API</h2>
-      <p>High-quality content from Pinterest with intelligent caching. Simple REST endpoints for girls, boys, cosplay, anime, and video collection.</p>
+      <p>High-quality content from Pinterest with intelligent caching. Simple REST endpoints for girls, boys, cosplay, anime, Gura, and video collection.</p>
       
       <div class="stats">
         <div class="stat-item">
@@ -508,16 +499,20 @@
           <div class="stat-number" id="statResponse">~180<span class="stat-unit">ms</span></div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">Girl Images</div>
+          <div class="stat-label">Girl</div>
           <div class="stat-number" id="statGirl">46<span class="stat-unit">+</span></div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">Boy Images</div>
+          <div class="stat-label">Boy</div>
           <div class="stat-number" id="statBoy">38<span class="stat-unit">+</span></div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">Anime Images</div>
+          <div class="stat-label">Anime</div>
           <div class="stat-number" id="statAnime">52<span class="stat-unit">+</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Gura</div>
+          <div class="stat-number" id="statGura">0<span class="stat-unit">+</span></div>
         </div>
         <div class="stat-item">
           <div class="stat-label">Videos</div>
@@ -526,12 +521,10 @@
       </div>
     </section>
 
-    <!-- Endpoints -->
     <div class="section-title">
       <i class="fas fa-image"></i> Image Endpoints
     </div>
     <div class="endpoints">
-      <!-- Girl -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/girl</span>
@@ -544,16 +537,13 @@
           <span class="keyword-tag">asian</span>
           <span class="keyword-tag">model</span>
         </div>
-        <div class="code-block">
-          <span class="code-line">GET /girl</span>
-        </div>
+        <div class="code-block"><span class="code-line">GET /girl</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('girl')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('girl')">🔍 Test</button>
         </div>
       </div>
 
-      <!-- Boy -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/boy</span>
@@ -566,16 +556,13 @@
           <span class="keyword-tag">asian</span>
           <span class="keyword-tag">model</span>
         </div>
-        <div class="code-block">
-          <span class="code-line">GET /boy</span>
-        </div>
+        <div class="code-block"><span class="code-line">GET /boy</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('boy')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('boy')">🔍 Test</button>
         </div>
       </div>
 
-      <!-- Cosplay -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/cosplay</span>
@@ -587,16 +574,13 @@
           <span class="keyword-tag">anime</span>
           <span class="keyword-tag">game</span>
         </div>
-        <div class="code-block">
-          <span class="code-line">GET /cosplay</span>
-        </div>
+        <div class="code-block"><span class="code-line">GET /cosplay</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('cosplay')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('cosplay')">🔍 Test</button>
         </div>
       </div>
 
-      <!-- Anime -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/anime</span>
@@ -608,17 +592,33 @@
           <span class="keyword-tag">manga</span>
           <span class="keyword-tag">waifu</span>
         </div>
-        <div class="code-block">
-          <span class="code-line">GET /anime</span>
-        </div>
+        <div class="code-block"><span class="code-line">GET /anime</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('anime')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('anime')">🔍 Test</button>
         </div>
       </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/gura</span>
+          <span class="method">GET</span>
+        </div>
+        <div class="endpoint-desc">Gawr Gura - Hololive EN shark girl 🦈</div>
+        <div>
+          <span class="keyword-tag">gawr gura</span>
+          <span class="keyword-tag">hololive</span>
+          <span class="keyword-tag">shark</span>
+          <span class="keyword-tag">vtuber</span>
+        </div>
+        <div class="code-block"><span class="code-line">GET /gura</span></div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('gura')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('gura')">🔍 Test</button>
+        </div>
+      </div>
     </div>
 
-    <!-- Video Endpoint -->
     <div class="section-title">
       <i class="fas fa-video"></i> Video Endpoint
     </div>
@@ -634,9 +634,7 @@
           <span class="keyword-tag">mp4</span>
           <span class="keyword-tag">collection</span>
         </div>
-        <div class="code-block">
-          <span class="code-line">GET /vdgai</span>
-        </div>
+        <div class="code-block"><span class="code-line">GET /vdgai</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('vdgai')">📋 Copy</button>
           <button class="btn btn-video" onclick="testEndpoint('vdgai')">▶️ Watch</button>
@@ -644,7 +642,6 @@
       </div>
     </div>
 
-    <!-- Live Demo -->
     <div class="demo">
       <div class="demo-header">
         <div>
@@ -656,6 +653,7 @@
           <button class="demo-tab" data-type="boy" onclick="switchDemo('boy')">Boy</button>
           <button class="demo-tab" data-type="cosplay" onclick="switchDemo('cosplay')">Cosplay</button>
           <button class="demo-tab" data-type="anime" onclick="switchDemo('anime')">Anime</button>
+          <button class="demo-tab" data-type="gura" onclick="switchDemo('gura')">Gura</button>
           <button class="demo-tab video" data-type="vdgai" onclick="switchDemo('vdgai')">Video</button>
         </div>
         <button class="btn btn-primary" onclick="refreshDemo()">
@@ -680,7 +678,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
       <div>© 2026 TMK API · Professional Image & Video Service</div>
       <div class="footer-links">
@@ -688,6 +685,7 @@
         <a onclick="copyUrl('boy')">boy</a>
         <a onclick="copyUrl('cosplay')">cosplay</a>
         <a onclick="copyUrl('anime')">anime</a>
+        <a onclick="copyUrl('gura')">gura</a>
         <a onclick="copyUrl('vdgai')">vdgai</a>
         <a href="/stats">stats</a>
       </div>
@@ -776,7 +774,6 @@
       }
     }
 
-    // Request counter
     if (localStorage.getItem('tmkCount')) {
       let count = parseInt(localStorage.getItem('tmkCount')) + 1;
       localStorage.setItem('tmkCount', count);
@@ -786,7 +783,6 @@
       document.getElementById('requestCount').textContent = '1';
     }
 
-    // Auto refresh stats
     setInterval(async () => {
       try {
         const res = await fetch(`${baseUrl}/stats`);
@@ -796,14 +792,13 @@
           document.getElementById('statGirl').innerHTML = (data.data.cacheSize.girl || 46) + '<span class="stat-unit">+</span>';
           document.getElementById('statBoy').innerHTML = (data.data.cacheSize.boy || 38) + '<span class="stat-unit">+</span>';
           document.getElementById('statAnime').innerHTML = (data.data.cacheSize.anime || 52) + '<span class="stat-unit">+</span>';
+          document.getElementById('statGura').innerHTML = (data.data.cacheSize.gura || 0) + '<span class="stat-unit">+</span>';
           document.getElementById('statVideos').innerHTML = (data.data.cacheSize.vdgai || 450) + '<span class="stat-unit">+</span>';
         }
       } catch (e) {}
     }, 5000);
 
-    // Load initial
     window.addEventListener('load', () => fetchAndDisplay('girl'));
   </script>
 </body>
 </html>
-        
