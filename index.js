@@ -1,6 +1,5 @@
 const express = require("express");
 const axios = require("axios");
-const cheerio = require("cheerio");
 const path = require("path");
 
 const app = express();
@@ -29,68 +28,83 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Hàm crawl Pinterest - copy từ pro_pin.py nhưng chỉnh lại
-async function crawlPinterest(keyword = "gái xinh", limit = 20) {
-  try {
-    const encodedKeyword = encodeURIComponent(keyword);
-    // URL tìm kiếm Pinterest
-    const url = `https://www.pinterest.com/search/pins/?q=${encodedKeyword}`;
-    
-    console.log(`🕷️ Đang crawl: ${url}`);
-    
-    const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-        "DNT": "1"
-      },
-      timeout: 15000
+/**
+ * Hàm Pinterest CHUẨN - Copy từ code của bạn
+ */
+async function pinterest_search(query, limit = 35) {
+  const encoded_q = encodeURIComponent(query);
+  const url = "https://www.pinterest.com/Resource/BaseSearchResource/get/";
+
+  const headers = {
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "cookie": "csrftoken=22b8f678dd2406e520f5e71295d8ec01; _auth=1; _pinterest_sess=deocock",  
+    "origin": "https://www.pinterest.com",
+    "referer": `https://www.pinterest.com/search/pins/?q=${encoded_q}`,
+    "user-agent": "Mozilla/5.0",
+    "x-app-version": "d8c18cb",
+    "x-csrftoken": "22b8f678dd2406e520f5e71295d8ec01",
+    "x-requested-with": "XMLHttpRequest"
+  };
+
+  const image_urls = [];
+  let bookmark = null;
+  let total = 0;
+  let page = 1;
+
+  while (total < limit) {
+    console.log(`📥 Đang tải trang ${page}...`);
+
+    const payload = new URLSearchParams({
+      source_url: `/search/pins/?q=${encoded_q}&rs=typed`,
+      data: JSON.stringify({
+        options: {
+          query: query,
+          scope: "pins",
+          bookmarks: bookmark ? [bookmark] : [],
+          redux_normalize_feed: true
+        },
+        context: {}
+      }),
+      _: Date.now()
     });
 
-    const $ = cheerio.load(data);
-    let images = [];
+    try {
+      const res = await axios.post(url, payload, { headers, timeout: 15000 });
+      const json_data = res.data;
 
-    // Tìm tất cả ảnh từ Pinterest
-    $("img[src*='pinimg.com']").each((i, el) => {
-      const src = $(el).attr("src");
-      if (src && !src.includes("avatar") && !src.includes("profile")) {
-        // Lấy ảnh gốc (originals)
-        const originalSrc = src.replace(/\/\d+x\d+\//, "/originals/");
-        images.push(originalSrc);
+      const results = json_data?.resource_response?.data?.results || [];
+      
+      if (results.length === 0) {
+        console.log("⏹️ Không còn kết quả.");
+        break;
       }
-    });
 
-    // Nếu không tìm thấy, thử selector khác
-    if (images.length === 0) {
-      $("div[data-test-id='pin'] img").each((i, el) => {
-        const src = $(el).attr("src");
-        if (src && src.includes("pinimg")) {
-          images.push(src);
+      for (const pin of results) {
+        if (total >= limit) break;
+        
+        const image_url = pin?.images?.orig?.url;
+        if (image_url && image_url.startsWith("http")) {
+          image_urls.push(image_url);
+          total++;
         }
-      });
+      }
+
+      bookmark = json_data?.resource?.options?.bookmarks?.[0];
+      if (!bookmark || bookmark === "-end-") break;
+
+      page++;
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Delay 1s
+
+    } catch (err) {
+      console.error(`❌ Lỗi trang ${page}:`, err.message);
+      break;
     }
-
-    // Lọc trùng và lấy đủ số lượng
-    const uniqueImages = [...new Set(images)];
-    
-    if (uniqueImages.length === 0) {
-      return { success: false, images: [] };
-    }
-
-    // Giới hạn số lượng
-    const limitedImages = uniqueImages.slice(0, limit).map(url => ({
-      id: Math.random().toString(36).substring(7),
-      link: url,
-      title: keyword
-    }));
-
-    return { success: true, images: limitedImages };
-
-  } catch (err) {
-    console.error("Lỗi crawl Pinterest:", err.message);
-    return { success: false, images: [] };
   }
+
+  console.log(`✅ Tổng cộng: ${image_urls.length} ảnh`);
+  return image_urls;
 }
 
 // API chính - /gai
@@ -104,12 +118,12 @@ app.get("/gai", async (req, res) => {
       return res.json({
         success: true,
         data: {
-          url: random.link,
-          id: random.id,
-          title: random.title
+          url: random,
+          id: Math.random().toString(36).substring(7),
+          title: "gái xinh"
         },
         meta: {
-          source: "pinterest (crawled)",
+          source: "pinterest (official API)",
           cached: true,
           total: cache.images.length,
           time: Date.now()
@@ -117,47 +131,41 @@ app.get("/gai", async (req, res) => {
       });
     }
 
-    // Crawl ảnh mới
-    console.log("🔄 Đang crawl Pinterest...");
-    const result = await crawlPinterest("gái xinh", 30);
+    // Gọi hàm Pinterest CHUẨN
+    console.log("🔄 Đang tìm ảnh từ Pinterest...");
+    const images = await pinterest_search("gái xinh", 30);
 
-    if (result.success && result.images.length > 0) {
-      cache.images = result.images;
+    if (images.length > 0) {
+      cache.images = images;
       cache.lastFetch = Date.now();
       
-      const random = cache.images[Math.floor(Math.random() * cache.images.length)];
+      const random = images[Math.floor(Math.random() * images.length)];
       
       res.json({
         success: true,
         data: {
-          url: random.link,
-          id: random.id,
-          title: random.title
+          url: random,
+          id: Math.random().toString(36).substring(7),
+          title: "gái xinh"
         },
         meta: {
-          source: "pinterest (crawled)",
+          source: "pinterest (official API)",
           cached: false,
-          total: cache.images.length,
+          total: images.length,
           time: Date.now()
         }
       });
     } else {
-      // Fallback images
-      const fallbacks = [
-        "https://i.imgur.com/Y8Hp6mJ.jpg",
-        "https://i.imgur.com/7U6V4cK.jpg"
-      ];
-      
+      // Fallback
       res.json({
         success: true,
         data: {
-          url: fallbacks[Math.floor(Math.random() * fallbacks.length)],
-          id: "fallback",
-          title: "Fallback"
+          url: "https://i.imgur.com/Y8Hp6mJ.jpg",
+          id: "fallback"
         },
         meta: {
           source: "fallback",
-          total: 2
+          total: 1
         }
       });
     }
@@ -177,19 +185,17 @@ app.get("/gai", async (req, res) => {
 // Endpoint redirect - /gái
 app.get("/gái", async (req, res) => {
   try {
-    // Nếu có cache thì redirect thẳng đến ảnh
     if (cache.images.length > 0) {
       const random = cache.images[Math.floor(Math.random() * cache.images.length)];
-      return res.redirect(random.link);
+      return res.redirect(random);
     }
     
-    // Nếu chưa có cache thì crawl nhanh
-    const result = await crawlPinterest("gái xinh", 5);
-    if (result.success && result.images.length > 0) {
-      return res.redirect(result.images[0].link);
+    // Nếu chưa có cache
+    const images = await pinterest_search("gái xinh", 5);
+    if (images.length > 0) {
+      return res.redirect(images[0]);
     }
     
-    // Fallback
     res.redirect("https://i.imgur.com/Y8Hp6mJ.jpg");
     
   } catch (err) {
@@ -222,17 +228,17 @@ app.get("/health", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
-╔═══════════════════════════╗
-║     TMK API v5.0          ║
-╠═══════════════════════════╣
-║  Port: ${PORT}                  ║
-║  Source: Pinterest (crawl) ║
-║  Status: ✅ Running        ║
-║  Endpoints:                ║
-║    • /gai (JSON)          ║
-║    • /gái (redirect)      ║
-║    • /stats               ║
-║    • /health              ║
-╚═══════════════════════════╝
+╔════════════════════════════╗
+║     TMK API v6.0           ║
+╠════════════════════════════╣
+║  Port: ${PORT}                   ║
+║  Source: Pinterest OFFICIAL ║
+║  Status: ✅ Running         ║
+║  Endpoints:                 ║
+║    • /gai (JSON)           ║
+║    • /gái (redirect)       ║
+║    • /stats                ║
+║    • /health               ║
+╚════════════════════════════╝
   `);
 });
