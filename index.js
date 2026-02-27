@@ -2,63 +2,100 @@ const express = require("express");
 const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
-const multer = require("multer");
-const cron = require("node-cron");
 
+// Khởi tạo app
 const app = express();
 
+// Middleware
 app.use(express.static(__dirname));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ==================== KIỂM TRA MÔI TRƯỜNG ====================
+const isVercel = process.env.VERCEL === "1";
+console.log(`🚀 Chạy trên: ${isVercel ? 'Vercel' : 'Local'}`);
 
 // ==================== CẤU HÌNH ====================
 
 // Thư mục cache
 const CACHE_DIR = path.join(__dirname, "cache");
-if (!fs.existsSync(CACHE_DIR)) {
-  fs.mkdirSync(CACHE_DIR, { recursive: true });
-  console.log("✅ Đã tạo thư mục cache");
-}
-
-// Thư mục uploads (trong cache)
 const UPLOAD_DIR = path.join(CACHE_DIR, "uploads");
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  console.log("✅ Đã tạo thư mục uploads");
+
+// Tạo thư mục nếu chưa có (chỉ trên local, Vercel sẽ dùng /tmp)
+if (!isVercel) {
+  if (!fs.existsSync(CACHE_DIR)) {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+    console.log("✅ Đã tạo thư mục cache");
+  }
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    console.log("✅ Đã tạo thư mục uploads");
+  }
+} else {
+  // Trên Vercel, dùng thư mục tạm /tmp
+  const tmpDir = '/tmp';
+  process.env.UPLOAD_DIR = path.join(tmpDir, 'uploads');
+  if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
+  }
+  console.log("✅ Đã tạo thư mục uploads trong /tmp");
 }
 
-// Cấu hình multer cho upload file
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: function (req, file, cb) {
-    // Tạo tên file: timestamp-random.extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  }
-});
+// ==================== MULTER CHO UPLOAD ====================
+let multer;
+let upload;
 
-// Filter file - chỉ cho phép video và ảnh
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
-  ];
+try {
+  multer = require('multer');
   
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WEBP) và video (MP4, WEBM, OGG)'), false);
-  }
-};
+  // Cấu hình storage
+  const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const uploadPath = isVercel ? process.env.UPLOAD_DIR : UPLOAD_DIR;
+      cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, uniqueSuffix + ext);
+    }
+  });
 
-const upload = multer({ 
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 100 * 1024 * 1024 } // Giới hạn 100MB
-});
+  // Filter file - chỉ cho phép video và ảnh
+  const fileFilter = (req, file, cb) => {
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WEBP) và video (MP4, WEBM, OGG)'), false);
+    }
+  };
+
+  upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 200 * 1024 * 1024 } // Giới hạn 200MB
+  });
+
+  console.log("✅ Đã khởi tạo multer thành công");
+} catch (err) {
+  console.log("⚠️ Multer chưa được cài đặt, upload sẽ không hoạt động");
+  upload = null;
+}
+
+// ==================== NODE-CRON (CHỈ DÙNG LOCAL) ====================
+let cron;
+try {
+  cron = require('node-cron');
+  console.log("✅ Đã khởi tạo node-cron thành công");
+} catch (err) {
+  console.log("⚠️ Node-cron chưa được cài đặt, tự động xóa sẽ không hoạt động");
+  cron = null;
+}
 
 // ==================== CACHE CLEANUP ====================
 
@@ -67,15 +104,17 @@ function cleanOldFiles() {
   console.log("🧹 Đang dọn dẹp cache...");
   const now = Date.now();
   const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+  
+  const uploadPath = isVercel ? process.env.UPLOAD_DIR : UPLOAD_DIR;
 
-  fs.readdir(UPLOAD_DIR, (err, files) => {
+  fs.readdir(uploadPath, (err, files) => {
     if (err) {
       console.error("Lỗi đọc thư mục uploads:", err);
       return;
     }
 
     files.forEach(file => {
-      const filePath = path.join(UPLOAD_DIR, file);
+      const filePath = path.join(uploadPath, file);
       fs.stat(filePath, (err, stats) => {
         if (err) {
           console.error(`Lỗi kiểm tra file ${file}:`, err);
@@ -97,10 +136,13 @@ function cleanOldFiles() {
   });
 }
 
-// Chạy dọn dẹp mỗi ngày lúc 3h sáng
-cron.schedule('0 3 * * *', () => {
-  cleanOldFiles();
-});
+// Chạy dọn dẹp nếu có cron và không phải Vercel
+if (cron && !isVercel) {
+  cron.schedule('0 3 * * *', () => {
+    cleanOldFiles();
+  });
+  console.log("⏰ Đã lên lịch dọn dẹp hàng ngày lúc 3h sáng");
+}
 
 // Chạy dọn dẹp lần đầu khi khởi động
 setTimeout(cleanOldFiles, 5000);
@@ -125,7 +167,7 @@ let cache = {
   cosplay: { images: [], lastFetch: 0 },
   anime: { images: [], lastFetch: 0 },
   vdgai: { videos: videoUrls, lastFetch: Date.now() },
-  uploaded: { files: [], lastFetch: Date.now() }, // Cache cho file upload
+  uploaded: { files: [], lastFetch: Date.now() },
   ttl: 30 * 60 * 1000, // 30 phút
   stats: {
     requests: 0,
@@ -245,7 +287,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "16.0.0"
+          version: "17.0.0"
         }
       });
     }
@@ -272,7 +314,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "16.0.0"
+          version: "17.0.0"
         }
       });
     } else {
@@ -348,7 +390,7 @@ function handleVideoEndpoint(req, res) {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "16.0.0"
+        version: "17.0.0"
       }
     });
   } catch (err) {
@@ -390,108 +432,134 @@ app.get("/vdgai/list", (req, res) => {
 // ==================== UPLOAD ENDPOINTS ====================
 
 // Endpoint upload file
-app.post("/upload", upload.single("file"), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: "Không có file nào được upload"
-      });
-    }
-
-    // Tạo URL cho file đã upload
-    const fileUrl = `${req.protocol}://${req.get("host")}/cache/uploads/${req.file.filename}`;
-    
-    // Thêm vào cache
-    cache.uploaded.files.push({
-      filename: req.file.filename,
-      originalname: req.file.originalname,
-      url: fileUrl,
-      size: req.file.size,
-      mimetype: req.file.mimetype,
-      uploadedAt: Date.now()
-    });
-
-    res.json({
-      success: true,
-      data: {
-        url: fileUrl,
-        filename: req.file.filename,
-        originalname: req.file.originalname,
-        size: req.file.size,
-        mimetype: req.file.mimetype
-      },
-      meta: {
-        endpoint: "/upload",
-        expiresIn: "30 days",
-        timestamp: Date.now()
+if (upload) {
+  app.post("/upload", upload.single("file"), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: "Không có file nào được upload"
+        });
       }
-    });
 
-  } catch (err) {
-    console.error("Lỗi upload:", err);
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
-  }
-});
-
-// Endpoint upload nhiều file
-app.post("/upload/multiple", upload.array("files", 10), (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Không có file nào được upload"
-      });
-    }
-
-    const uploadedFiles = req.files.map(file => {
-      const fileUrl = `${req.protocol}://${req.get("host")}/cache/uploads/${file.filename}`;
+      const uploadPath = isVercel ? process.env.UPLOAD_DIR : UPLOAD_DIR;
+      const fileUrl = `${req.protocol}://${req.get("host")}/cache/uploads/${req.file.filename}`;
       
-      // Thêm vào cache
-      cache.uploaded.files.push({
-        filename: file.filename,
-        originalname: file.originalname,
-        url: fileUrl,
-        size: file.size,
-        mimetype: file.mimetype,
-        uploadedAt: Date.now()
+      // Trên Vercel, file trong /tmp không thể serve trực tiếp
+      // Nên trả về đường dẫn file thay vì URL
+      if (isVercel) {
+        res.json({
+          success: true,
+          data: {
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype,
+            note: "File được lưu trong bộ nhớ tạm và sẽ tự động xóa sau 30 ngày"
+          },
+          meta: {
+            endpoint: "/upload",
+            expiresIn: "30 days",
+            timestamp: Date.now()
+          }
+        });
+      } else {
+        res.json({
+          success: true,
+          data: {
+            url: fileUrl,
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+          },
+          meta: {
+            endpoint: "/upload",
+            expiresIn: "30 days",
+            timestamp: Date.now()
+          }
+        });
+      }
+
+    } catch (err) {
+      console.error("Lỗi upload:", err);
+      res.status(500).json({
+        success: false,
+        error: err.message
+      });
+    }
+  });
+
+  // Endpoint upload nhiều file
+  app.post("/upload/multiple", upload.array("files", 10), (req, res) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Không có file nào được upload"
+        });
+      }
+
+      const uploadedFiles = req.files.map(file => {
+        const fileUrl = `${req.protocol}://${req.get("host")}/cache/uploads/${file.filename}`;
+        
+        if (isVercel) {
+          return {
+            filename: file.filename,
+            originalname: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype
+          };
+        } else {
+          return {
+            url: fileUrl,
+            filename: file.filename,
+            originalname: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype
+          };
+        }
       });
 
-      return {
-        url: fileUrl,
-        filename: file.filename,
-        originalname: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype
-      };
-    });
+      res.json({
+        success: true,
+        data: uploadedFiles,
+        meta: {
+          endpoint: "/upload/multiple",
+          count: uploadedFiles.length,
+          expiresIn: "30 days",
+          timestamp: Date.now()
+        }
+      });
 
-    res.json({
-      success: true,
-      data: uploadedFiles,
-      meta: {
-        endpoint: "/upload/multiple",
-        count: uploadedFiles.length,
-        expiresIn: "30 days",
-        timestamp: Date.now()
-      }
-    });
-
-  } catch (err) {
-    console.error("Lỗi upload nhiều file:", err);
+    } catch (err) {
+      console.error("Lỗi upload nhiều file:", err);
+      res.status(500).json({
+        success: false,
+        error: err.message
+      });
+    }
+  });
+} else {
+  app.post("/upload", (req, res) => {
     res.status(500).json({
       success: false,
-      error: err.message
+      error: "Chức năng upload chưa được cấu hình. Vui lòng cài đặt multer."
     });
-  }
-});
+  });
+  app.post("/upload/multiple", (req, res) => {
+    res.status(500).json({
+      success: false,
+      error: "Chức năng upload chưa được cấu hình. Vui lòng cài đặt multer."
+    });
+  });
+}
 
 // Endpoint lấy danh sách file đã upload
 app.get("/upload/list", (req, res) => {
-  fs.readdir(UPLOAD_DIR, (err, files) => {
+  const uploadPath = isVercel ? process.env.UPLOAD_DIR : UPLOAD_DIR;
+  
+  fs.readdir(uploadPath, (err, files) => {
     if (err) {
       return res.status(500).json({
         success: false,
@@ -499,18 +567,23 @@ app.get("/upload/list", (req, res) => {
       });
     }
 
-    // Lấy thông tin chi tiết từng file
     const fileDetails = files.map(filename => {
-      const filePath = path.join(UPLOAD_DIR, filename);
-      const stats = fs.statSync(filePath);
-      return {
-        filename: filename,
-        url: `${req.protocol}://${req.get("host")}/cache/uploads/${filename}`,
-        size: stats.size,
-        created: stats.birthtime,
-        expiresIn: Math.max(0, 30 - Math.floor((Date.now() - stats.birthtimeMs) / (24 * 60 * 60 * 1000))) + " days"
-      };
-    });
+      const filePath = path.join(uploadPath, filename);
+      try {
+        const stats = fs.statSync(filePath);
+        const fileUrl = isVercel ? null : `${req.protocol}://${req.get("host")}/cache/uploads/${filename}`;
+        
+        return {
+          filename: filename,
+          url: fileUrl,
+          size: stats.size,
+          created: stats.birthtime,
+          expiresIn: Math.max(0, 30 - Math.floor((Date.now() - stats.birthtimeMs) / (24 * 60 * 60 * 1000))) + " days"
+        };
+      } catch (e) {
+        return null;
+      }
+    }).filter(f => f !== null);
 
     res.json({
       success: true,
@@ -527,9 +600,9 @@ app.get("/upload/list", (req, res) => {
 // Endpoint xóa file
 app.delete("/upload/:filename", (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.join(UPLOAD_DIR, filename);
+  const uploadPath = isVercel ? process.env.UPLOAD_DIR : UPLOAD_DIR;
+  const filePath = path.join(uploadPath, filename);
 
-  // Kiểm tra file có tồn tại không
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({
       success: false,
@@ -537,7 +610,6 @@ app.delete("/upload/:filename", (req, res) => {
     });
   }
 
-  // Xóa file
   fs.unlink(filePath, (err) => {
     if (err) {
       return res.status(500).json({
@@ -554,16 +626,20 @@ app.delete("/upload/:filename", (req, res) => {
   });
 });
 
-// Serve file từ thư mục cache
-app.use("/cache", express.static(CACHE_DIR));
+// Serve file từ thư mục cache (chỉ trên local)
+if (!isVercel) {
+  app.use("/cache", express.static(CACHE_DIR));
+} else {
+  app.use("/cache", express.static('/tmp'));
+}
 
 // ==================== UTILITY ENDPOINTS ====================
 
 app.get("/stats", (req, res) => {
-  // Đếm số file trong thư mục uploads
+  const uploadPath = isVercel ? process.env.UPLOAD_DIR : UPLOAD_DIR;
   let uploadCount = 0;
   try {
-    const files = fs.readdirSync(UPLOAD_DIR);
+    const files = fs.readdirSync(uploadPath);
     uploadCount = files.length;
   } catch (err) {
     console.error("Lỗi đọc thư mục uploads:", err);
@@ -583,7 +659,8 @@ app.get("/stats", (req, res) => {
         uploaded: uploadCount
       },
       uptime: process.uptime(),
-      version: "16.0.0"
+      version: "17.0.0",
+      environment: isVercel ? "vercel" : "local"
     },
     meta: { timestamp: Date.now() }
   });
@@ -593,7 +670,8 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "16.0.0",
+    version: "17.0.0",
+    environment: isVercel ? "vercel" : "local",
     endpoints: [
       "/girl", "/boy", "/cosplay", "/anime",
       "/vdgai", "/vdgai/redirect", "/vdgai/list",
@@ -607,7 +685,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║        TMK API v16.0                     ║
+║        TMK API v17.0                     ║
 ╠══════════════════════════════════════════╣
 ║  📸 Image Endpoints:                      ║
 ║  ├─ /girl     → Girl images               ║
@@ -626,9 +704,10 @@ app.listen(PORT, () => {
 ║  ├─ /upload/list      → List uploaded     ║
 ║  └─ /upload/:filename → Delete file       ║
 ╠══════════════════════════════════════════╣
-║  📦 Cache: ${CACHE_DIR}                    ║
-║  ⏰ Auto-clean: Every 30 days             ║
+║  📦 Giới hạn file: 200MB                  ║
+║  ⏰ Tự động xóa: 30 ngày                   ║
+║  🌐 Môi trường: ${isVercel ? 'Vercel' : 'Local'}                ║
 ║  ⚡ Status: ✅ Running                      ║
 ╚══════════════════════════════════════════╝
   `);
-});
+});      
