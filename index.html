@@ -549,44 +549,7 @@
 
     <!-- Endpoints -->
     <div class="endpoints">
-      <!-- Endpoint 1: Browser -->
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="endpoint-path">/gái</span>
-          <span class="method">GET</span>
-        </div>
-        
-        <div class="meta-list">
-          <div class="meta-item">
-            <i class="fas fa-image"></i>
-            <span>Content-Type: image/*</span>
-          </div>
-          <div class="meta-item">
-            <i class="fas fa-clock"></i>
-            <span>Cache: 30 minutes</span>
-          </div>
-          <div class="meta-item">
-            <i class="fas fa-globe"></i>
-            <span>Direct image redirect</span>
-          </div>
-        </div>
-
-        <div class="code-block">
-          <span class="code-gray"># Get random image directly</span>
-          <span class="code-line"><span class="code-purple">curl</span> -L https://tmk-jade.vercel.app/gái</span>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('gái')">
-            <i class="far fa-copy"></i> Copy URL
-          </button>
-          <a href="/gái" target="_blank" class="btn btn-success" id="btnGai">
-            <i class="fas fa-external-link-alt"></i> Test
-          </a>
-        </div>
-      </div>
-
-      <!-- Endpoint 2: JSON -->
+      <!-- Endpoint JSON (chính) -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/gai</span>
@@ -633,6 +596,43 @@
           </a>
         </div>
       </div>
+
+      <!-- Endpoint Redirect (có dấu - redirect sang /gai) -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/gái</span>
+          <span class="method">GET</span>
+        </div>
+        
+        <div class="meta-list">
+          <div class="meta-item">
+            <i class="fas fa-image"></i>
+            <span>Content-Type: image/*</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-clock"></i>
+            <span>Cache: 30 minutes</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-redirect"></i>
+            <span>Redirects to /gai</span>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <span class="code-gray"># Get random image (redirect)</span>
+          <span class="code-line"><span class="code-purple">curl</span> -L https://tmk-jade.vercel.app/gái</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('gái')">
+            <i class="far fa-copy"></i> Copy URL
+          </button>
+          <a href="/gái" target="_blank" class="btn btn-success" id="btnGai">
+            <i class="fas fa-external-link-alt"></i> Test Redirect
+          </a>
+        </div>
+      </div>
     </div>
 
     <!-- Live Demo -->
@@ -641,7 +641,7 @@
         <div class="demo-title">
           <i class="fas fa-eye" style="color: #4f46e5;"></i>
           <span>Live Demo</span>
-          <span class="demo-badge">random image</span>
+          <span class="demo-badge">from /gai</span>
         </div>
         <button class="btn btn-primary" onclick="fetchImage()">
           <i class="fas fa-sync-alt"></i> Refresh
@@ -664,8 +664,8 @@
     <footer class="footer">
       <div>© 2026 TMK API. All rights reserved.</div>
       <div class="footer-links">
-        <a href="#" onclick="copyUrl('gái')">/gái</a>
         <a href="#" onclick="copyUrl('gai')">/gai</a>
+        <a href="#" onclick="copyUrl('gái')">/gái</a>
         <a href="/stats">stats</a>
         <a href="/health">health</a>
       </div>
@@ -699,7 +699,7 @@
       }
     }
 
-    // Fetch image
+    // Fetch image từ /gai
     async function fetchImage() {
       const img = document.getElementById('preview');
       const loading = document.getElementById('loading');
@@ -712,7 +712,7 @@
       img.style.display = 'none';
       
       try {
-        const res = await fetch(`${baseUrl}/api/v1/random`);
+        const res = await fetch(`${baseUrl}/gai`);
         const data = await res.json();
         
         const latency = Date.now() - start;
@@ -748,6 +748,12 @@
 
     // Load initial image
     window.addEventListener('load', fetchImage);
+
+    // Fix cho các nút GET (đảm bảo chúng hoạt động)
+    document.addEventListener('DOMContentLoaded', function() {
+      // Các nút đã có href hoặc onclick, không cần fix thêm
+      console.log('TMK API Docs loaded');
+    });
   </script>
 </body>
 </html>

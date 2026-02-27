@@ -31,8 +31,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// API chính
-app.get("/api/v1/random", async (req, res) => {
+// API chính - endpoint JSON
+app.get("/gai", async (req, res) => {
   try {
     // Headers
     res.setHeader("X-API-Version", "1.0");
@@ -156,13 +156,9 @@ app.get("/api/v1/random", async (req, res) => {
   }
 });
 
-// Endpoint cũ (giữ tương thích)
-app.get("/gai", (req, res) => {
-  res.redirect("/api/v1/random");
-});
-
+// Endpoint redirect cho browser (có dấu)
 app.get("/gái", (req, res) => {
-  res.redirect("/api/v1/random");
+  res.redirect("/gai");
 });
 
 // Stats
@@ -196,9 +192,8 @@ app.listen(PORT, () => {
 ║  Port: ${PORT}               ║
 ║  Status: ✅ Active      ║
 ║  Endpoints:             ║
-║    • /api/v1/random    ║
-║    • /gai              ║
-║    • /gái              ║
+║    • /gai (JSON)       ║
+║    • /gái (redirect)   ║
 ║    • /stats            ║
 ║    • /health           ║
 ╚════════════════════════╝
