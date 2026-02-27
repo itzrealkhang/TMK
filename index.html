@@ -31,7 +31,6 @@
       color: #eef2f6;
     }
 
-    /* Container */
     .docs {
       max-width: 1280px;
       width: 100%;
@@ -66,11 +65,8 @@
       margin-bottom: 4px;
     }
 
-    .logo .badge {
-      font-size: 12px;
-      color: #64748b;
+    .badge {
       display: flex;
-      align-items: center;
       gap: 8px;
     }
 
@@ -151,6 +147,38 @@
 
     .dark .hero p {
       color: #94a3b8;
+    }
+
+    /* Source indicator */
+    .source-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 8px 16px;
+      background: rgba(79,70,229,0.1);
+      border-radius: 40px;
+      font-size: 13px;
+      color: #4f46e5;
+    }
+
+    .dark .source-indicator {
+      background: rgba(129,140,248,0.1);
+      color: #818cf8;
+    }
+
+    .source-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
 
     /* Stats */
@@ -464,6 +492,7 @@
     .footer-links a {
       color: #64748b;
       text-decoration: none;
+      cursor: pointer;
     }
 
     .footer-links a:hover {
@@ -494,13 +523,6 @@
         width: 100%;
       }
     }
-
-    @media (max-width: 480px) {
-      .endpoint-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
   </style>
 </head>
 <body>
@@ -510,8 +532,9 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span>v1.0</span>
-          <span>production</span>
+          <span>v2.0</span>
+          <span>dual-source</span>
+          <span>fallback</span>
         </div>
       </div>
       
@@ -523,8 +546,12 @@
 
     <!-- Hero -->
     <section class="hero">
-      <h2>Simple · Fast · Reliable</h2>
-      <p>TMK API cung cấp ảnh ngẫu nhiên chất lượng cao với tốc độ nhanh, cache thông minh và uptime 99.9%.</p>
+      <h2>High Availability Image API</h2>
+      <p>TMK API tự động chuyển đổi nguồn ảnh khi có lỗi, đảm bảo uptime 99.9% với cơ chế dự phòng thông minh.</p>
+      <div class="source-indicator">
+        <span class="source-dot"></span>
+        <span>Current source: <span id="currentSource">imgur</span> (auto failover to picsum)</span>
+      </div>
     </section>
 
     <!-- Stats -->
@@ -538,8 +565,8 @@
         <div class="stat-value" id="statCache">2.5k<span class="stat-unit">images</span></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Uptime</div>
-        <div class="stat-value">99.9<span class="stat-unit">%</span></div>
+        <div class="stat-label">Sources</div>
+        <div class="stat-value">2<span class="stat-unit">imgur+picsum</span></div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Status</div>
@@ -549,7 +576,7 @@
 
     <!-- Endpoints -->
     <div class="endpoints">
-      <!-- Endpoint JSON (chính) -->
+      <!-- Endpoint JSON -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/gai</span>
@@ -566,8 +593,8 @@
             <span>Cache: 30 minutes</span>
           </div>
           <div class="meta-item">
-            <i class="fas fa-key"></i>
-            <span>No authentication</span>
+            <i class="fas fa-shield-alt"></i>
+            <span>Auto fallback to Picsum</span>
           </div>
         </div>
 
@@ -581,14 +608,14 @@
           <span class="code-line">    <span class="code-green">"title"</span>: <span class="code-yellow">"Image title"</span></span>
           <span class="code-line">  },</span>
           <span class="code-line">  <span class="code-green">"meta"</span>: {</span>
-          <span class="code-line">    <span class="code-green">"total"</span>: <span class="code-number">2500</span>,</span>
-          <span class="code-line">    <span class="code-green">"cached"</span>: <span class="code-blue">true</span></span>
+          <span class="code-line">    <span class="code-green">"source"</span>: <span class="code-yellow">"imgur"</span>,</span>
+          <span class="code-line">    <span class="code-green">"total"</span>: <span class="code-number">2500</span></span>
           <span class="code-line">  }</span>
           <span class="code-line">}</span>
         </div>
 
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('gai')">
+          <button class="btn btn-primary" onclick="copyToClipboard('/gai')">
             <i class="far fa-copy"></i> Copy URL
           </button>
           <a href="/gai" target="_blank" class="btn btn-outline" id="btnGaiJson">
@@ -597,7 +624,7 @@
         </div>
       </div>
 
-      <!-- Endpoint Redirect (có dấu - redirect sang /gai) -->
+      <!-- Endpoint Redirect -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/gái</span>
@@ -607,25 +634,25 @@
         <div class="meta-list">
           <div class="meta-item">
             <i class="fas fa-image"></i>
-            <span>Content-Type: image/*</span>
+            <span>Redirect to image</span>
           </div>
           <div class="meta-item">
             <i class="fas fa-clock"></i>
             <span>Cache: 30 minutes</span>
           </div>
           <div class="meta-item">
-            <i class="fas fa-redirect"></i>
+            <i class="fas fa-redo-alt"></i>
             <span>Redirects to /gai</span>
           </div>
         </div>
 
         <div class="code-block">
-          <span class="code-gray"># Get random image (redirect)</span>
+          <span class="code-gray"># Get image directly</span>
           <span class="code-line"><span class="code-purple">curl</span> -L https://tmk-jade.vercel.app/gái</span>
         </div>
 
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('gái')">
+          <button class="btn btn-primary" onclick="copyToClipboard('/gái')">
             <i class="far fa-copy"></i> Copy URL
           </button>
           <a href="/gái" target="_blank" class="btn btn-success" id="btnGai">
@@ -641,7 +668,7 @@
         <div class="demo-title">
           <i class="fas fa-eye" style="color: #4f46e5;"></i>
           <span>Live Demo</span>
-          <span class="demo-badge">from /gai</span>
+          <span class="demo-badge" id="demoSource">imgur</span>
         </div>
         <button class="btn btn-primary" onclick="fetchImage()">
           <i class="fas fa-sync-alt"></i> Refresh
@@ -654,7 +681,7 @@
           <div>Loading image...</div>
         </div>
         <img id="preview" class="preview-image" 
-             src="https://i.imgur.com/Y8Hp6mJ.jpg" 
+             src="https://picsum.photos/800/600" 
              alt="Preview"
              style="display: block;">
       </div>
@@ -662,10 +689,10 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <div>© 2026 TMK API. All rights reserved.</div>
+      <div>© 2026 TMK API · High Availability</div>
       <div class="footer-links">
-        <a href="#" onclick="copyUrl('gai')">/gai</a>
-        <a href="#" onclick="copyUrl('gái')">/gái</a>
+        <a onclick="copyToClipboard('/gai')">/gai</a>
+        <a onclick="copyToClipboard('/gái')">/gái</a>
         <a href="/stats">stats</a>
         <a href="/health">health</a>
       </div>
@@ -678,11 +705,22 @@
   <script>
     const baseUrl = window.location.origin;
 
-    // Copy URL
-    function copyUrl(endpoint) {
-      const url = `${baseUrl}/${endpoint}`;
+    // Hàm copy URL - ĐÃ FIX: copy URL chứ không copy chữ
+    function copyToClipboard(endpoint) {
+      const url = baseUrl + endpoint;
       navigator.clipboard.writeText(url).then(() => {
-        alert(`✅ Copied: ${url}`);
+        // Thông báo đẹp
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.style.background = '#22c55e';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = '';
+        }, 2000);
+      }).catch(err => {
+        alert('❌ Copy failed: ' + err);
       });
     }
 
@@ -699,12 +737,15 @@
       }
     }
 
-    // Fetch image từ /gai
+    // Fetch image
     async function fetchImage() {
       const img = document.getElementById('preview');
       const loading = document.getElementById('loading');
       const statResponse = document.getElementById('statResponse');
       const statCache = document.getElementById('statCache');
+      const statStatus = document.getElementById('statStatus');
+      const currentSource = document.getElementById('currentSource');
+      const demoSource = document.getElementById('demoSource');
       
       const start = Date.now();
       
@@ -725,6 +766,12 @@
             img.style.display = 'block';
           };
           
+          // Update source info
+          if (data.meta?.source) {
+            currentSource.textContent = data.meta.source;
+            demoSource.textContent = data.meta.source;
+          }
+          
           if (data.meta?.total) {
             statCache.innerHTML = `${data.meta.total}<span class="stat-unit">images</span>`;
           }
@@ -733,6 +780,8 @@
         console.error(err);
         loading.style.display = 'none';
         img.style.display = 'block';
+        statStatus.innerHTML = '⚠️ Degraded';
+        statStatus.style.color = '#f97316';
       }
     }
 
@@ -749,11 +798,19 @@
     // Load initial image
     window.addEventListener('load', fetchImage);
 
-    // Fix cho các nút GET (đảm bảo chúng hoạt động)
-    document.addEventListener('DOMContentLoaded', function() {
-      // Các nút đã có href hoặc onclick, không cần fix thêm
-      console.log('TMK API Docs loaded');
-    });
+    // Auto refresh stats mỗi 10s
+    setInterval(async () => {
+      try {
+        const res = await fetch(`${baseUrl}/stats`);
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('statCache').innerHTML = 
+            `${data.data.cacheSize}<span class="stat-unit">images</span>`;
+          document.getElementById('currentSource').textContent = data.data.currentSource || 'imgur';
+        }
+      } catch (e) {}
+    }, 10000);
   </script>
 </body>
 </html>
+   
