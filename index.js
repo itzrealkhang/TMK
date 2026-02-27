@@ -8,7 +8,7 @@ app.use(express.static(__dirname));
 
 // Cache cho từng loại
 let cache = {
-  gai: { images: [], lastFetch: 0 },
+  girl: { images: [], lastFetch: 0 },
   boy: { images: [], lastFetch: 0 },
   cosplay: { images: [], lastFetch: 0 },
   ttl: 30 * 60 * 1000, // 30 phút
@@ -18,11 +18,11 @@ let cache = {
   }
 };
 
-// Keywords cho từng loại
+// Keywords cho từng loại - ĐÃ XÓA "GÁI XINH"
 const KEYWORDS = {
-  gai: ["gái xinh", "hot girl", "xinh đẹp", "model nữ"],
-  boy: ["trai đẹp", "hot boy", "nam thần", "model nam"],
-  cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay"]
+  girl: ["girl", "beautiful girl", "cute girl", "asian girl", "model girl", "pretty woman"],
+  boy: ["boy", "handsome boy", "cute boy", "asian boy", "model boy", "handsome man"],
+  cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay", "cosplay vietnam", "cosplay asian"]
 };
 
 // Middleware
@@ -133,7 +133,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "8.0.0"
+          version: "10.0.0"
         }
       });
     }
@@ -161,16 +161,23 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "8.0.0"
+          version: "10.0.0"
         }
       });
     } else {
-      // Fallback
+      // Fallback images
+      const fallbackImages = {
+        girl: "https://i.imgur.com/Y8Hp6mJ.jpg",
+        boy: "https://i.imgur.com/7U6V4cK.jpg",
+        cosplay: "https://i.imgur.com/8QqZqZq.jpg"
+      };
+      
       res.json({
         success: true,
         data: {
-          url: "https://i.imgur.com/Y8Hp6mJ.jpg",
-          id: "fallback"
+          url: fallbackImages[type] || "https://i.imgur.com/Y8Hp6mJ.jpg",
+          id: "fallback",
+          keyword: randomKeyword
         },
         meta: {
           endpoint: `/${type}`,
@@ -187,7 +194,8 @@ async function handleImageEndpoint(req, res, type, keywordList) {
       success: true,
       data: {
         url: "https://i.imgur.com/Y8Hp6mJ.jpg",
-        id: "error"
+        id: "error",
+        keyword: "error"
       },
       meta: {
         endpoint: `/${type}`,
@@ -198,34 +206,45 @@ async function handleImageEndpoint(req, res, type, keywordList) {
   }
 }
 
-// Endpoint /gái
-app.get("/gái", (req, res) => handleImageEndpoint(req, res, "gai", KEYWORDS.gai));
+// ==================== ENDPOINTS CHÍNH ====================
 
-// Endpoint /gai (không dấu - redirect)
-app.get("/gai", (req, res) => res.redirect("/gái"));
+// Endpoint GIRL
+app.get("/girl", (req, res) => handleImageEndpoint(req, res, "girl", KEYWORDS.girl));
 
-// Endpoint /boy
+// Endpoint BOY
 app.get("/boy", (req, res) => handleImageEndpoint(req, res, "boy", KEYWORDS.boy));
 
-// Endpoint /cosplay
+// Endpoint COSPLAY
 app.get("/cosplay", (req, res) => handleImageEndpoint(req, res, "cosplay", KEYWORDS.cosplay));
 
-// Endpoint redirect ảnh trực tiếp
+// Endpoint cũ - redirect sang girl (giữ để tương thích)
+app.get("/gai", (req, res) => res.redirect("/girl"));
+app.get("/gái", (req, res) => res.redirect("/girl"));
+
+// ==================== REDIRECT ẢNH TRỰC TIẾP ====================
+
 app.get("/image/:type", async (req, res) => {
   const { type } = req.params;
-  if (!["gai", "boy", "cosplay"].includes(type)) {
+  if (!["girl", "boy", "cosplay"].includes(type)) {
     return res.redirect("/");
   }
   
-  const cacheData = cache[type === "gai" ? "gai" : type];
+  const cacheData = cache[type];
   
   if (cacheData.images.length > 0) {
     const random = cacheData.images[Math.floor(Math.random() * cacheData.images.length)];
     return res.redirect(random);
   }
   
-  res.redirect("https://i.imgur.com/Y8Hp6mJ.jpg");
+  const fallbackImages = {
+    girl: "https://i.imgur.com/Y8Hp6mJ.jpg",
+    boy: "https://i.imgur.com/7U6V4cK.jpg",
+    cosplay: "https://i.imgur.com/8QqZqZq.jpg"
+  };
+  res.redirect(fallbackImages[type] || "https://i.imgur.com/Y8Hp6mJ.jpg");
 });
+
+// ==================== UTILITY ENDPOINTS ====================
 
 // Stats
 app.get("/stats", (req, res) => {
@@ -235,12 +254,12 @@ app.get("/stats", (req, res) => {
       requests: cache.stats.requests,
       cacheHits: cache.stats.hits,
       cacheSize: {
-        gai: cache.gai.images.length,
+        girl: cache.girl.images.length,
         boy: cache.boy.images.length,
         cosplay: cache.cosplay.images.length
       },
       uptime: process.uptime(),
-      version: "8.0.0"
+      version: "10.0.0"
     },
     meta: {
       timestamp: Date.now()
@@ -253,8 +272,8 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "8.0.0",
-    endpoints: ["/gái", "/boy", "/cosplay", "/stats", "/health"]
+    version: "10.0.0",
+    endpoints: ["/girl", "/boy", "/cosplay", "/stats", "/health"]
   });
 });
 
@@ -262,14 +281,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════╗
-║        TMK API v8.0                ║
+║        TMK API v10.0               ║
 ╠════════════════════════════════════╣
 ║  🚀 Endpoints:                     ║
-║  ├─ /gái   → Gái xinh              ║
-║  ├─ /boy   → Trai đẹp              ║
-║  ├─ /cosplay → Cosplay              ║
-║  ├─ /stats → Thống kê              ║
-║  └─ /health → Health check         ║
+║  ├─ /girl    → Girl images         ║
+║  ├─ /boy     → Boy images          ║
+║  ├─ /cosplay → Cosplay images      ║
+║  ├─ /stats   → Statistics          ║
+║  └─ /health  → Health check        ║
 ╠════════════════════════════════════╣
 ║  📦 Port: ${PORT}                         ║
 ║  ⚡ Status: ✅ Running              ║

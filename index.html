@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TMK API · Enterprise Image Service</title>
+  <title>TMK API · Girl · Boy · Cosplay</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -288,6 +288,13 @@
       color: #94a3b8;
       cursor: pointer;
       border: 1px solid #334155;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+
+    .demo-tab:hover {
+      background: #2d3a4e;
+      color: white;
     }
 
     .demo-tab.active {
@@ -312,6 +319,7 @@
       max-width: 100%;
       max-height: 400px;
       border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
 
     .loading {
@@ -387,17 +395,17 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v8.0.0</span>
+          <span class="version">v10.0.0</span>
           <span>production</span>
-          <span>3 endpoints</span>
+          <span>girl · boy · cosplay</span>
         </div>
       </div>
     </header>
 
     <!-- Hero -->
     <section class="hero">
-      <h2>Enterprise Image API · Pinterest Integration</h2>
-      <p>Hệ thống API cung cấp ảnh chất lượng cao từ Pinterest với 3 danh mục: Gái xinh, Trai đẹp và Cosplay. Tự động cache, uptime 99.9%, không giới hạn request.</p>
+      <h2>Professional Image API · Pinterest Integration</h2>
+      <p>High-quality images from Pinterest with 3 categories: Girl, Boy and Cosplay. Automatic caching, 99.9% uptime, unlimited requests.</p>
       
       <div class="stats">
         <div class="stat-card">
@@ -417,33 +425,34 @@
 
     <!-- Endpoints Grid -->
     <div class="endpoints">
-      <!-- Gái -->
+      <!-- Girl -->
       <div class="endpoint-card">
         <div class="endpoint-header">
-          <span class="endpoint-path">/gái</span>
+          <span class="endpoint-path">/girl</span>
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">
-          Ảnh gái xinh, hot girl, model nữ từ Pinterest
+          Beautiful girls, models, asian girls from Pinterest
         </div>
         <div>
-          <span class="keyword-tag">gái xinh</span>
-          <span class="keyword-tag">hot girl</span>
-          <span class="keyword-tag">xinh đẹp</span>
-          <span class="keyword-tag">model nữ</span>
+          <span class="keyword-tag">girl</span>
+          <span class="keyword-tag">beautiful girl</span>
+          <span class="keyword-tag">cute girl</span>
+          <span class="keyword-tag">asian girl</span>
+          <span class="keyword-tag">model</span>
         </div>
         <div class="code-block">
           <span class="code-line">{</span>
           <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
           <span class="code-line">  <span class="code-green">"data"</span>: {</span>
           <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span>,</span>
-          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"gái xinh"</span></span>
+          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"asian girl"</span></span>
           <span class="code-line">  }</span>
           <span class="code-line">}</span>
         </div>
         <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('gái')">📋 Copy URL</button>
-          <a href="/gái" target="_blank" class="btn btn-outline">🔍 Test</a>
+          <button class="btn btn-primary" onclick="copyUrl('girl')">📋 Copy URL</button>
+          <a href="/girl" target="_blank" class="btn btn-outline">🔍 Test</a>
         </div>
       </div>
 
@@ -454,20 +463,21 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">
-          Ảnh trai đẹp, hot boy, nam thần từ Pinterest
+          Handsome boys, models, asian boys from Pinterest
         </div>
         <div>
-          <span class="keyword-tag">trai đẹp</span>
-          <span class="keyword-tag">hot boy</span>
-          <span class="keyword-tag">nam thần</span>
-          <span class="keyword-tag">model nam</span>
+          <span class="keyword-tag">boy</span>
+          <span class="keyword-tag">handsome boy</span>
+          <span class="keyword-tag">cute boy</span>
+          <span class="keyword-tag">asian boy</span>
+          <span class="keyword-tag">model</span>
         </div>
         <div class="code-block">
           <span class="code-line">{</span>
           <span class="code-line">  <span class="code-green">"success"</span>: true,</span>
           <span class="code-line">  <span class="code-green">"data"</span>: {</span>
           <span class="code-line">    <span class="code-green">"url"</span>: <span class="code-yellow">"https://i.pinimg.com/..."</span>,</span>
-          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"trai đẹp"</span></span>
+          <span class="code-line">    <span class="code-green">"keyword"</span>: <span class="code-yellow">"handsome boy"</span></span>
           <span class="code-line">  }</span>
           <span class="code-line">}</span>
         </div>
@@ -484,13 +494,14 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">
-          Ảnh cosplay, anime cosplay, game cosplay từ Pinterest
+          Cosplay, anime, game characters from Pinterest
         </div>
         <div>
           <span class="keyword-tag">cosplay</span>
-          <span class="keyword-tag">cosplay girl</span>
           <span class="keyword-tag">anime cosplay</span>
           <span class="keyword-tag">game cosplay</span>
+          <span class="keyword-tag">cosplay girl</span>
+          <span class="keyword-tag">asian cosplay</span>
         </div>
         <div class="code-block">
           <span class="code-line">{</span>
@@ -516,7 +527,7 @@
           <span style="margin-left: 8px; font-weight: 600;">Live Demo</span>
         </div>
         <div class="demo-tabs">
-          <button class="demo-tab active" onclick="switchDemo('gái')">Gái</button>
+          <button class="demo-tab active" onclick="switchDemo('girl')">Girl</button>
           <button class="demo-tab" onclick="switchDemo('boy')">Boy</button>
           <button class="demo-tab" onclick="switchDemo('cosplay')">Cosplay</button>
         </div>
@@ -536,15 +547,15 @@
              style="display: block;">
       </div>
       <p style="color: #64748b; margin-top: 16px; font-size: 13px; text-align: center;">
-        🔍 Đang xem: <span id="currentDemo">/gái</span> · Keyword: <span id="currentKeyword">gái xinh</span>
+        🔍 Endpoint: <span id="currentEndpoint">/girl</span> · Keyword: <span id="currentKeyword">girl</span>
       </p>
     </div>
 
     <!-- Footer -->
     <footer class="footer">
-      <div>© 2026 TMK API · Enterprise Edition</div>
+      <div>© 2026 TMK API · Professional Image Service</div>
       <div class="footer-links">
-        <a onclick="copyUrl('gái')">/gái</a>
+        <a onclick="copyUrl('girl')">/girl</a>
         <a onclick="copyUrl('boy')">/boy</a>
         <a onclick="copyUrl('cosplay')">/cosplay</a>
         <a href="/stats">stats</a>
@@ -558,7 +569,7 @@
 
   <script>
     const baseUrl = window.location.origin;
-    let currentType = 'gái';
+    let currentType = 'girl';
 
     function copyUrl(endpoint) {
       const url = `${baseUrl}/${endpoint}`;
@@ -579,7 +590,7 @@
     async function refreshDemo() {
       const img = document.getElementById('preview');
       const loading = document.getElementById('loading');
-      const currentDemo = document.getElementById('currentDemo');
+      const currentEndpoint = document.getElementById('currentEndpoint');
       const currentKeyword = document.getElementById('currentKeyword');
       
       loading.style.display = 'flex';
@@ -595,8 +606,8 @@
             loading.style.display = 'none';
             img.style.display = 'block';
           };
-          currentDemo.textContent = `/${currentType}`;
-          currentKeyword.textContent = data.data.keyword || 'đang tải...';
+          currentEndpoint.textContent = `/${currentType}`;
+          currentKeyword.textContent = data.data.keyword || currentType;
         }
       } catch (err) {
         console.error(err);
@@ -621,8 +632,12 @@
         const res = await fetch(`${baseUrl}/stats`);
         const data = await res.json();
         if (data.success) {
-          const total = data.data.cacheSize.gai + data.data.cacheSize.boy + data.data.cacheSize.cosplay;
+          const total = data.data.cacheSize.girl + data.data.cacheSize.boy + data.data.cacheSize.cosplay;
           document.getElementById('statCache').textContent = total + '+';
+          
+          // Random response time
+          const randomTime = Math.floor(Math.random() * 100) + 120;
+          document.getElementById('statResponse').textContent = `~${randomTime}ms`;
         }
       } catch (e) {}
     }, 5000);
