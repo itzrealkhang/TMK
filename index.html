@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TMK API · Images & Videos</title>
+  <title>TMK API · Images, Videos & Upload</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -20,15 +20,13 @@
       background: #0b0e14;
       color: #eef2f6;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       padding: 20px;
     }
 
     .docs {
-      max-width: 1280px;
+      max-width: 1400px;
       width: 100%;
+      margin: 0 auto;
       background: #111827;
       border-radius: 32px;
       padding: 40px;
@@ -125,6 +123,20 @@
       color: #f1f5f9;
     }
 
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 40px 0 24px;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title i {
+      color: #4f46e5;
+    }
+
     .endpoints {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -172,6 +184,10 @@
 
     .method.video {
       background: #ec4899;
+    }
+
+    .method.upload {
+      background: #f97316;
     }
 
     .endpoint-desc {
@@ -260,6 +276,15 @@
       background: #db2777;
     }
 
+    .btn-orange {
+      background: #f97316;
+      color: white;
+    }
+
+    .btn-orange:hover {
+      background: #ea580c;
+    }
+
     .btn-outline {
       background: transparent;
       border: 2px solid #4f46e5;
@@ -320,6 +345,10 @@
       background: #ec4899;
     }
 
+    .demo-tab.upload-tab.active {
+      background: #f97316;
+    }
+
     .image-frame {
       background: #030712;
       border-radius: 20px;
@@ -365,6 +394,139 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Upload Section */
+    .upload-section {
+      background: #0f172a;
+      border-radius: 24px;
+      padding: 28px;
+      border: 1px solid #1f2937;
+      margin-bottom: 40px;
+    }
+
+    .upload-area {
+      border: 2px dashed #4f46e5;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 20px 0;
+    }
+
+    .upload-area:hover {
+      background: rgba(79, 70, 229, 0.1);
+      border-color: #818cf8;
+    }
+
+    .upload-area i {
+      font-size: 48px;
+      color: #4f46e5;
+      margin-bottom: 16px;
+    }
+
+    .upload-area p {
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .upload-area small {
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .upload-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .upload-preview-item {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .upload-preview-item video,
+    .upload-preview-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .upload-preview-item .filename {
+      font-size: 11px;
+      color: #94a3b8;
+      word-break: break-all;
+    }
+
+    .file-list {
+      margin-top: 24px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #1e293b;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-info i {
+      font-size: 24px;
+      color: #4f46e5;
+    }
+
+    .file-details {
+      font-size: 13px;
+    }
+
+    .file-name {
+      color: #f1f5f9;
+      font-weight: 500;
+    }
+
+    .file-meta {
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .file-actions button {
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .btn-copy {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+    }
+
     .footer {
       display: flex;
       justify-content: space-between;
@@ -405,6 +567,10 @@
     }
 
     @media (max-width: 768px) {
+      .docs {
+        padding: 24px;
+      }
+      
       .endpoints {
         grid-template-columns: 1fr;
       }
@@ -421,16 +587,15 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v15.0.0</span>
-          <span>5 endpoints</span>
-          <span>images + videos</span>
+          <span class="version">v16.0.0</span>
+          <span>images + videos + upload</span>
         </div>
       </div>
     </header>
 
     <section class="hero">
-      <h2>Professional Image & Video API</h2>
-      <p>High-quality images from Pinterest and video collection from JSON. Simple and clean endpoints.</p>
+      <h2>Professional Image & Video API with Upload</h2>
+      <p>High-quality images from Pinterest, video collection from JSON, and file upload with 30-day auto-cleanup.</p>
       
       <div class="stats">
         <div class="stat-card">
@@ -446,12 +611,16 @@
           <div class="stat-value" id="statVideos">450+</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Uptime</div>
-          <div class="stat-value">99.9%</div>
+          <div class="stat-label">Uploads</div>
+          <div class="stat-value" id="statUploads">0</div>
         </div>
       </div>
     </section>
 
+    <!-- Image Endpoints -->
+    <div class="section-title">
+      <i class="fas fa-image"></i> Image Endpoints
+    </div>
     <div class="endpoints">
       <!-- Girl -->
       <div class="endpoint-card">
@@ -460,14 +629,7 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Beautiful girls, models, asian girls</div>
-        <div>
-          <span class="keyword-tag">girl</span>
-          <span class="keyword-tag">beautiful</span>
-          <span class="keyword-tag">asian girl</span>
-        </div>
-        <div class="code-block">
-          <span class="code-line">GET /girl</span>
-        </div>
+        <div class="code-block">GET /girl</div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('girl')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('girl')">🔍 Test</button>
@@ -481,14 +643,7 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Handsome boys, models, asian boys</div>
-        <div>
-          <span class="keyword-tag">boy</span>
-          <span class="keyword-tag">handsome</span>
-          <span class="keyword-tag">asian boy</span>
-        </div>
-        <div class="code-block">
-          <span class="code-line">GET /boy</span>
-        </div>
+        <div class="code-block">GET /boy</div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('boy')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('boy')">🔍 Test</button>
@@ -502,14 +657,7 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Cosplay, anime, game characters</div>
-        <div>
-          <span class="keyword-tag">cosplay</span>
-          <span class="keyword-tag">anime</span>
-          <span class="keyword-tag">game</span>
-        </div>
-        <div class="code-block">
-          <span class="code-line">GET /cosplay</span>
-        </div>
+        <div class="code-block">GET /cosplay</div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('cosplay')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('cosplay')">🔍 Test</button>
@@ -523,43 +671,122 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Anime, manga, waifu, cute anime</div>
-        <div>
-          <span class="keyword-tag">anime</span>
-          <span class="keyword-tag">manga</span>
-          <span class="keyword-tag">waifu</span>
-        </div>
-        <div class="code-block">
-          <span class="code-line">GET /anime</span>
-        </div>
+        <div class="code-block">GET /anime</div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('anime')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('anime')">🔍 Test</button>
         </div>
       </div>
+    </div>
 
-      <!-- Video Gái -->
+    <!-- Video Endpoints -->
+    <div class="section-title">
+      <i class="fas fa-video"></i> Video Endpoints
+    </div>
+    <div class="endpoints">
+      <!-- VDGAI -->
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/vdgai</span>
           <span class="method video">GET</span>
         </div>
-        <div class="endpoint-desc">Video collection from JSON (450+ videos)</div>
-        <div>
-          <span class="keyword-tag">video</span>
-          <span class="keyword-tag">mp4</span>
-          <span class="keyword-tag">collection</span>
-        </div>
-        <div class="code-block">
-          <span class="code-line">GET /vdgai</span>
-        </div>
+        <div class="endpoint-desc">Random video from collection</div>
+        <div class="code-block">GET /vdgai</div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('vdgai')">📋 Copy</button>
           <a href="/vdgai/redirect" target="_blank" class="btn btn-pink">▶️ Watch</a>
         </div>
       </div>
+
+      <!-- VDGAI Redirect -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/vdgai/redirect</span>
+          <span class="method video">GET</span>
+        </div>
+        <div class="endpoint-desc">Direct redirect to video</div>
+        <div class="code-block">GET /vdgai/redirect</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('vdgai/redirect')">📋 Copy</button>
+          <a href="/vdgai/redirect" target="_blank" class="btn btn-pink">▶️ Watch</a>
+        </div>
+      </div>
+
+      <!-- VDGAI List -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/vdgai/list</span>
+          <span class="method video">GET</span>
+        </div>
+        <div class="endpoint-desc">List first 20 videos</div>
+        <div class="code-block">GET /vdgai/list</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('vdgai/list')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('vdgai/list')">🔍 View</button>
+        </div>
+      </div>
     </div>
 
-    <!-- LIVE DEMO -->
+    <!-- Upload Endpoints -->
+    <div class="section-title">
+      <i class="fas fa-upload"></i> Upload Endpoints
+    </div>
+    <div class="endpoints">
+      <!-- Upload Single -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/upload</span>
+          <span class="method upload">POST</span>
+        </div>
+        <div class="endpoint-desc">Upload single file (max 100MB)</div>
+        <div class="code-block">POST /upload (multipart/form-data)</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('upload')">📋 Copy</button>
+        </div>
+      </div>
+
+      <!-- Upload Multiple -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/upload/multiple</span>
+          <span class="method upload">POST</span>
+        </div>
+        <div class="endpoint-desc">Upload multiple files (max 10)</div>
+        <div class="code-block">POST /upload/multiple</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('upload/multiple')">📋 Copy</button>
+        </div>
+      </div>
+
+      <!-- Upload List -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/upload/list</span>
+          <span class="method upload">GET</span>
+        </div>
+        <div class="endpoint-desc">List all uploaded files</div>
+        <div class="code-block">GET /upload/list</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('upload/list')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('upload/list')">🔍 View</button>
+        </div>
+      </div>
+
+      <!-- Delete File -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/upload/:filename</span>
+          <span class="method upload">DELETE</span>
+        </div>
+        <div class="endpoint-desc">Delete specific file</div>
+        <div class="code-block">DELETE /upload/filename.mp4</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('upload/filename.mp4')">📋 Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Demo Tabs -->
     <div class="demo">
       <div class="demo-header">
         <div>
@@ -594,8 +821,38 @@
       </p>
     </div>
 
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="color: #f1f5f9;"><i class="fas fa-upload" style="color: #f97316;"></i> File Upload</h3>
+        <button class="btn btn-orange" onclick="refreshFileList()">
+          <i class="fas fa-sync-alt"></i> Refresh List
+        </button>
+      </div>
+
+      <!-- Upload Area -->
+      <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Click to upload or drag and drop</p>
+        <p style="font-size: 12px; color: #64748b;">Supports: Images (JPG, PNG, GIF) and Videos (MP4, WebM)</p>
+        <p style="font-size: 11px; color: #4f46e5;">Max size: 100MB · Auto-delete after 30 days</p>
+        <input type="file" id="fileInput" style="display: none;" onchange="uploadFile(this.files)">
+      </div>
+
+      <!-- Upload Preview -->
+      <div class="upload-preview" id="uploadPreview"></div>
+
+      <!-- File List -->
+      <div class="file-list" id="fileList">
+        <div style="text-align: center; padding: 40px; color: #64748b;">
+          <i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 16px;"></i>
+          <p>No files uploaded yet</p>
+        </div>
+      </div>
+    </div>
+
     <footer class="footer">
-      <div>© 2026 TMK API · Images & Videos</div>
+      <div>© 2026 TMK API · Images, Videos & Upload</div>
       <div class="footer-links">
         <a onclick="copyUrl('girl')">/girl</a>
         <a onclick="copyUrl('boy')">/boy</a>
@@ -627,12 +884,8 @@
 
     function switchDemo(type) {
       currentType = type;
-      
-      document.querySelectorAll('.demo-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
+      document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`.demo-tab[data-type="${type}"]`).classList.add('active');
-      
       fetchAndDisplay(type);
     }
 
@@ -692,6 +945,101 @@
       }
     }
 
+    // Upload functions
+    async function uploadFile(files) {
+      if (!files || files.length === 0) return;
+      
+      const formData = new FormData();
+      formData.append('file', files[0]);
+      
+      try {
+        const res = await fetch(`${baseUrl}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`✅ Upload thành công: ${data.data.filename}`);
+          refreshFileList();
+          
+          // Show preview
+          const preview = document.getElementById('uploadPreview');
+          preview.innerHTML = `
+            <div class="upload-preview-item">
+              ${data.data.mimetype.startsWith('video/') ? 
+                `<video controls src="${data.data.url}"></video>` : 
+                `<img src="${data.data.url}" alt="preview">`}
+              <div class="filename">${data.data.originalname}</div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        alert('❌ Upload thất bại: ' + err.message);
+      }
+    }
+
+    async function refreshFileList() {
+      try {
+        const res = await fetch(`${baseUrl}/upload/list`);
+        const data = await res.json();
+        
+        if (data.success) {
+          const fileList = document.getElementById('fileList');
+          document.getElementById('statUploads').textContent = data.total;
+          
+          if (data.total === 0) {
+            fileList.innerHTML = `
+              <div style="text-align: center; padding: 40px; color: #64748b;">
+                <i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 16px;"></i>
+                <p>No files uploaded yet</p>
+              </div>
+            `;
+            return;
+          }
+          
+          fileList.innerHTML = data.data.map(file => `
+            <div class="file-item">
+              <div class="file-info">
+                <i class="fas ${file.filename.match(/\.(mp4|webm|ogg)$/i) ? 'fa-video' : 'fa-image'}"></i>
+                <div class="file-details">
+                  <div class="file-name">${file.filename}</div>
+                  <div class="file-meta">
+                    ${(file.size / 1024 / 1024).toFixed(2)} MB · Expires in ${file.expiresIn}
+                  </div>
+                </div>
+              </div>
+              <div class="file-actions">
+                <button class="btn-copy" onclick="copyUrl('cache/uploads/${file.filename}')">📋 Copy</button>
+                <button class="btn-delete" onclick="deleteFile('${file.filename}')">🗑️ Delete</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading file list:', err);
+      }
+    }
+
+    async function deleteFile(filename) {
+      if (!confirm(`Xóa file ${filename}?`)) return;
+      
+      try {
+        const res = await fetch(`${baseUrl}/upload/${filename}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`✅ Đã xóa: ${filename}`);
+          refreshFileList();
+        }
+      } catch (err) {
+        alert('❌ Xóa thất bại: ' + err.message);
+      }
+    }
+
+    // Auto refresh stats
     if (localStorage.getItem('tmkCount')) {
       let count = parseInt(localStorage.getItem('tmkCount')) + 1;
       localStorage.setItem('tmkCount', count);
@@ -714,7 +1062,11 @@
       } catch (e) {}
     }, 5000);
 
-    window.addEventListener('load', () => fetchAndDisplay('girl'));
+    // Load initial data
+    window.addEventListener('load', () => {
+      fetchAndDisplay('girl');
+      refreshFileList();
+    });
   </script>
 </body>
 </html>
