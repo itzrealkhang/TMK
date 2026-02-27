@@ -415,7 +415,7 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v12.0.0</span>
+          <span class="version">v13.0.0</span>
           <span>4 endpoints</span>
           <span>images + videos</span>
         </div>
@@ -552,6 +552,7 @@
       </div>
     </div>
 
+    <!-- LIVE DEMO - ĐÃ FIX -->
     <div class="demo">
       <div class="demo-header">
         <div>
@@ -559,10 +560,10 @@
           <span style="margin-left: 8px; font-weight: 600;">Live Demo</span>
         </div>
         <div class="demo-tabs">
-          <button class="demo-tab active" onclick="switchDemo('girl')">Girl</button>
-          <button class="demo-tab" onclick="switchDemo('boy')">Boy</button>
-          <button class="demo-tab" onclick="switchDemo('cosplay')">Cosplay</button>
-          <button class="demo-tab video" onclick="switchDemo('vdgai')">Video</button>
+          <button class="demo-tab active" data-type="girl" onclick="switchDemo('girl')">Girl</button>
+          <button class="demo-tab" data-type="boy" onclick="switchDemo('boy')">Boy</button>
+          <button class="demo-tab" data-type="cosplay" onclick="switchDemo('cosplay')">Cosplay</button>
+          <button class="demo-tab video" data-type="vdgai" onclick="switchDemo('vdgai')">Video</button>
         </div>
         <button class="btn btn-primary" onclick="refreshDemo()">
           <i class="fas fa-sync-alt"></i> Refresh
@@ -604,6 +605,7 @@
     const baseUrl = window.location.origin;
     let currentType = 'girl';
 
+    // Copy URL
     function copyUrl(endpoint) {
       const url = `${baseUrl}/${endpoint}`;
       navigator.clipboard.writeText(url).then(() => {
@@ -611,37 +613,52 @@
       });
     }
 
+    // Test endpoint
     function testEndpoint(endpoint) {
       window.open(`${baseUrl}/${endpoint}`, '_blank');
     }
 
+    // Switch tab - ĐÃ FIX
     function switchDemo(type) {
       currentType = type;
+      
+      // Update active tab
       document.querySelectorAll('.demo-tab').forEach(tab => {
         tab.classList.remove('active');
       });
-      event.target.classList.add('active');
-      refreshDemo();
+      document.querySelector(`.demo-tab[data-type="${type}"]`).classList.add('active');
+      
+      // Fetch new content
+      fetchAndDisplay(type);
     }
 
-    async function refreshDemo() {
-      const img = document.getElementById('preview');
+    // Refresh button - ĐÃ FIX
+    function refreshDemo() {
+      fetchAndDisplay(currentType);
+    }
+
+    // Hàm fetch và hiển thị - ĐÃ FIX
+    async function fetchAndDisplay(type) {
       const loading = document.getElementById('loading');
       const imageFrame = document.getElementById('imageFrame');
       const currentEndpoint = document.getElementById('currentEndpoint');
       const currentKeyword = document.getElementById('currentKeyword');
       
+      // Hiện loading
       loading.style.display = 'flex';
-      img.style.display = 'none';
       
       try {
-        const res = await fetch(`${baseUrl}/${currentType}`);
+        const res = await fetch(`${baseUrl}/${type}`);
         const data = await res.json();
         
         if (data.success && data.data?.url) {
-          if (currentType === 'vdgai') {
+          if (type === 'vdgai') {
             // Video
             imageFrame.innerHTML = `
+              <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <div>Loading...</div>
+              </div>
               <video controls style="max-width:100%; max-height:400px; border-radius:12px;">
                 <source src="${data.data.url}" type="video/mp4">
                 Your browser does not support the video tag.
@@ -649,16 +666,32 @@
             `;
           } else {
             // Image
-            imageFrame.innerHTML = `<img id="preview" class="preview-image" src="${data.data.url}" alt="Preview">`;
+            imageFrame.innerHTML = `
+              <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <div>Loading...</div>
+              </div>
+              <img id="preview" class="preview-image" src="${data.data.url}" alt="Preview">
+            `;
           }
-          loading.style.display = 'none';
-          currentEndpoint.textContent = `/${currentType}`;
-          currentKeyword.textContent = data.data.keyword || data.data.title || currentType;
+          
+          // Cập nhật thông tin
+          currentEndpoint.textContent = `/${type}`;
+          currentKeyword.textContent = data.data.keyword || data.data.title || type;
         }
       } catch (err) {
         console.error(err);
-        loading.style.display = 'none';
-        imageFrame.innerHTML = `<img id="preview" class="preview-image" src="https://i.imgur.com/Y8Hp6mJ.jpg" alt="Preview">`;
+        imageFrame.innerHTML = `
+          <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <div>Loading...</div>
+          </div>
+          <img id="preview" class="preview-image" src="https://i.imgur.com/Y8Hp6mJ.jpg" alt="Preview">
+        `;
+      } finally {
+        // Ẩn loading
+        const newLoading = document.getElementById('loading');
+        if (newLoading) newLoading.style.display = 'none';
       }
     }
 
@@ -685,7 +718,8 @@
       } catch (e) {}
     }, 5000);
 
-    window.addEventListener('load', refreshDemo);
+    // Load initial image
+    window.addEventListener('load', () => fetchAndDisplay('girl'));
   </script>
 </body>
 </html>
