@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const { exec } = require('child_process');
 const crypto = require('crypto');
+const multer = require('multer');
 
 // Import handler Gura (nếu có)
 let handleGura = (req, res) => res.json({ success: false, message: "Gura module not loaded" });
@@ -25,40 +26,119 @@ app.use(express.urlencoded({ extended: true }));
 
 // ==================== KIỂM TRA MÔI TRƯỜNG ====================
 const isRender = process.env.RENDER === "true" || process.env.RENDER === "1";
-console.log(`🚀 TMK API v2.2.1 chạy trên: ${isRender ? 'Render' : 'Local'}`);
+console.log(`🚀 TMK API v2.5.0 chạy trên: ${isRender ? 'Render' : 'Local'}`);
 
-// ==================== CẤU HÌNH DOWNLOAD ====================
+// ==================== CẤU HÌNH UPLOAD ====================
 
-// Thư mục downloads
-const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
-if (!fs.existsSync(DOWNLOAD_DIR)) {
-  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
-  console.log(`📁 Đã tạo thư mục downloads`);
+// Thư mục uploads
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  console.log(`📁 Đã tạo thư mục uploads`);
 }
 
-// Dọn dẹp file cũ mỗi 30 phút
-setInterval(() => {
-  const now = Date.now();
-  const thirtyMinutes = 30 * 60 * 1000;
-  
-  fs.readdir(DOWNLOAD_DIR, (err, files) => {
-    if (err) return;
-    
+// Giới hạn dung lượng
+const MAX_DISK_USAGE = 500 * 1024 * 1024; // 500MB
+const WARNING_THRESHOLD = 0.8; // 80%
+
+// ==================== HÀM KIỂM TRA DUNG LƯỢNG ====================
+
+/**
+ * Tính tổng dung lượng thư mục
+ */
+function getFolderSize(folderPath) {
+  let totalSize = 0;
+  try {
+    const files = fs.readdirSync(folderPath);
     files.forEach(file => {
-      const filePath = path.join(DOWNLOAD_DIR, file);
-      fs.stat(filePath, (err, stats) => {
-        if (err) return;
-        
-        // Xóa file cũ hơn 30 phút
-        if (now - stats.mtimeMs > thirtyMinutes) {
-          fs.unlink(filePath, () => {
-            console.log(`🧹 Đã xóa file cũ: ${file}`);
-          });
-        }
-      });
+      const filePath = path.join(folderPath, file);
+      const stats = fs.statSync(filePath);
+      totalSize += stats.size;
     });
-  });
-}, 30 * 60 * 1000);
+  } catch (err) {
+    console.error('Lỗi tính dung lượng:', err);
+  }
+  return totalSize;
+}
+
+/**
+ * Xóa file cũ nhất
+ */
+function deleteOldestFile() {
+  try {
+    const files = fs.readdirSync(UPLOAD_DIR)
+      .map(file => {
+        const filePath = path.join(UPLOAD_DIR, file);
+        const stats = fs.statSync(filePath);
+        return { file, filePath, mtime: stats.mtimeMs, size: stats.size };
+      })
+      .sort((a, b) => a.mtime - b.mtime);
+
+    if (files.length > 0) {
+      const oldest = files[0];
+      fs.unlinkSync(oldest.filePath);
+      console.log(`🧹 Đã xóa file cũ: ${oldest.file} (${(oldest.size / 1024 / 1024).toFixed(2)} MB)`);
+      return true;
+    }
+  } catch (err) {
+    console.error('Lỗi xóa file cũ:', err);
+  }
+  return false;
+}
+
+/**
+ * Kiểm tra và dọn dẹp nếu gần đầy
+ */
+function checkAndCleanDisk() {
+  const totalSize = getFolderSize(UPLOAD_DIR);
+  const usagePercent = totalSize / MAX_DISK_USAGE;
+  
+  console.log(`📊 Uploads: ${(totalSize / 1024 / 1024).toFixed(2)}MB / 500MB (${Math.round(usagePercent * 100)}%)`);
+  
+  if (usagePercent >= WARNING_THRESHOLD) {
+    console.log(`⚠️ Dung lượng gần đầy, tự động dọn dẹp...`);
+    
+    let cleaned = 0;
+    let currentSize = totalSize;
+    
+    while (currentSize > MAX_DISK_USAGE * 0.5) {
+      if (!deleteOldestFile()) break;
+      currentSize = getFolderSize(UPLOAD_DIR);
+      cleaned++;
+    }
+    
+    console.log(`✅ Đã dọn ${cleaned} file. Còn: ${(currentSize / 1024 / 1024).toFixed(2)}MB`);
+  }
+}
+
+// Chạy kiểm tra mỗi 10 phút
+setInterval(checkAndCleanDisk, 10 * 60 * 1000);
+setTimeout(checkAndCleanDisk, 5000);
+
+// ==================== CẤU HÌNH MULTER ====================
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const totalSize = getFolderSize(UPLOAD_DIR);
+    if (totalSize >= MAX_DISK_USAGE) {
+      return cb(new Error('Dung lượng upload đã đầy (500MB)'));
+    }
+    cb(null, UPLOAD_DIR);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  }
+});
+
+// Hỗ trợ tất cả các loại file
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 250 * 1024 * 1024 // 250MB
+  }
+});
 
 // ==================== ĐỌC FILE VIDEO ====================
 
@@ -81,7 +161,6 @@ let cache = {
   anime: { images: [], lastFetch: 0 },
   gura: { images: [], lastFetch: 0 },
   vdgai: { videos: videoUrls, lastFetch: Date.now() },
-  downloads: {},
   ttl: 30 * 60 * 1000, // 30 phút
   stats: {
     requests: 0,
@@ -92,8 +171,8 @@ let cache = {
 // ==================== KEYWORDS ====================
 
 const KEYWORDS = {
-  girl: ["gái xinh", "gái cute"],
-  boy: ["bot", "trai", "trai đẹp", "trai 6 múi"],
+  girl: ["girl", "beautiful girl", "cute girl", "asian girl", "model girl", "pretty woman"],
+  boy: ["boy", "handsome boy", "cute boy", "asian boy", "model boy", "handsome man"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay", "cosplay vietnam", "cosplay asian"],
   anime: ["anime", "anime girl", "anime boy", "cute anime", "anime art", "manga", "waifu"]
 };
@@ -183,7 +262,6 @@ async function handleImageEndpoint(req, res, type, keywordList) {
     const cacheData = cache[type];
     const randomKeyword = keywordList[Math.floor(Math.random() * keywordList.length)];
     
-    // Cache hit
     if (Date.now() - cacheData.lastFetch < cache.ttl && cacheData.images.length > 0) {
       cache.stats.hits++;
       const random = cacheData.images[Math.floor(Math.random() * cacheData.images.length)];
@@ -202,12 +280,11 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "2.2.1"
+          version: "2.5.0"
         }
       });
     }
 
-    // Cache miss - fetch từ Pinterest
     console.log(`🔄 Đang tìm ảnh ${type} với keyword: ${randomKeyword}`);
     const images = await searchPinterestImages(randomKeyword, 50);
 
@@ -230,11 +307,10 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "2.2.1"
+          version: "2.5.0"
         }
       });
     } else {
-      // Fallback
       const fallbackImages = {
         girl: "https://i.imgur.com/Y8Hp6mJ.jpg",
         boy: "https://i.imgur.com/7U6V4cK.jpg",
@@ -256,7 +332,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           source: "fallback",
           total: 1,
           timestamp: Date.now(),
-          version: "2.2.1"
+          version: "2.5.0"
         }
       });
     }
@@ -274,7 +350,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         category: "image",
         source: "error",
         timestamp: Date.now(),
-        version: "2.2.1"
+        version: "2.5.0"
       }
     });
   }
@@ -293,7 +369,7 @@ app.get("/vdgai", (req, res) => {
         meta: { 
           endpoint: "/vdgai", 
           timestamp: Date.now(), 
-          version: "2.2.1" 
+          version: "2.5.0" 
         }
       });
     }
@@ -314,7 +390,7 @@ app.get("/vdgai", (req, res) => {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "2.2.1"
+        version: "2.5.0"
       }
     });
   } catch (err) {
@@ -325,7 +401,7 @@ app.get("/vdgai", (req, res) => {
       meta: { 
         endpoint: "/vdgai", 
         timestamp: Date.now(), 
-        version: "2.2.1" 
+        version: "2.5.0" 
       }
     });
   }
@@ -345,7 +421,13 @@ function checkYtDlp() {
   });
 }
 
-// ==================== DOWNLOAD ENDPOINT (ĐÃ FIX) ====================
+// ==================== DOWNLOAD ENDPOINT ====================
+
+const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
+if (!fs.existsSync(DOWNLOAD_DIR)) {
+  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+  console.log(`📁 Đã tạo thư mục downloads`);
+}
 
 app.get("/download", async (req, res) => {
   let outputPath = null;
@@ -360,7 +442,6 @@ app.get("/download", async (req, res) => {
       });
     }
 
-    // Kiểm tra URL
     try {
       new URL(url);
     } catch (err) {
@@ -370,17 +451,13 @@ app.get("/download", async (req, res) => {
       });
     }
 
-    // Kiểm tra yt-dlp
     const ytVersion = await checkYtDlp();
     console.log(`✅ yt-dlp version: ${ytVersion}`);
 
-    // Tạo tên file ngẫu nhiên
     const fileId = crypto.randomBytes(8).toString('hex');
     const filename = `video_${fileId}.mp4`;
     outputPath = path.join(DOWNLOAD_DIR, filename);
 
-    // ===== BƯỚC 1: LẤY THÔNG TIN VIDEO =====
-    // Sử dụng format "best" để lấy thông tin từ format tốt nhất
     const infoCommand = `yt-dlp -f "best" -j --no-playlist "${url}"`;
     
     console.log(`📋 Đang lấy thông tin video từ: ${new URL(url).hostname}`);
@@ -400,9 +477,6 @@ app.get("/download", async (req, res) => {
       });
     });
 
-    // ===== BƯỚC 2: TẢI VIDEO =====
-    // Sử dụng format "best" - yt-dlp tự chọn format tốt nhất có sẵn
-    // Không ép buộc mp4 hay độ phân giải cụ thể để tránh lỗi Facebook
     console.log(`📥 Đang tải video: ${info.title}`);
     
     const downloadCommand = `yt-dlp -f "best" -o "${outputPath}" "${url}"`;
@@ -418,14 +492,12 @@ app.get("/download", async (req, res) => {
       });
     });
 
-    // Kiểm tra file đã tồn tại
     if (!fs.existsSync(outputPath)) {
       throw new Error('File không được tạo');
     }
 
     const stats = fs.statSync(outputPath);
     
-    // Xác định nền tảng
     const urlObj = new URL(url);
     let platform = urlObj.hostname.replace('www.', '');
     if (platform.includes('youtube.com') || platform.includes('youtu.be')) platform = 'youtube';
@@ -434,7 +506,6 @@ app.get("/download", async (req, res) => {
     if (platform.includes('instagram.com')) platform = 'instagram';
     if (platform.includes('twitter.com') || platform.includes('x.com')) platform = 'twitter';
 
-    // Trả về đầy đủ thông tin + link download
     res.json({
       success: true,
       data: {
@@ -458,39 +529,28 @@ app.get("/download", async (req, res) => {
       meta: {
         endpoint: "/download",
         timestamp: Date.now(),
-        version: "2.2.1"
+        version: "2.5.0"
       }
     });
-
-    // Lưu thông tin vào cache
-    cache.downloads[filename] = {
-      path: outputPath,
-      info: info,
-      expires: Date.now() + 30 * 60 * 1000
-    };
 
   } catch (err) {
     console.error('❌ Lỗi chi tiết:', err.message);
     
-    // Xóa file nếu có lỗi
     if (outputPath && fs.existsSync(outputPath)) {
       fs.unlinkSync(outputPath);
     }
     
-    // Phân tích lỗi để đưa ra thông báo phù hợp
     let errorMessage = err.message;
     let errorDetails = '';
     
     if (err.message.includes('Requested format is not available')) {
-      errorMessage = 'Định dạng video không khả dụng. Vui lòng thử lại với URL khác.';
-      errorDetails = 'Facebook thường có nhiều định dạng, thử lại lần nữa có thể thành công.';
+      errorMessage = 'Định dạng video không khả dụng.';
     } else if (err.message.includes('Sign in to confirm') || err.message.includes('bot')) {
-      errorMessage = 'YouTube yêu cầu xác thực chống bot.';
-      errorDetails = 'Vui lòng thử với video TikTok hoặc nền tảng khác.';
+      errorMessage = 'YouTube yêu cầu xác thực.';
     } else if (err.message.includes('Video unavailable')) {
-      errorMessage = 'Video không khả dụng hoặc đã bị xóa.';
+      errorMessage = 'Video không khả dụng.';
     } else if (err.message.includes('timed out')) {
-      errorMessage = 'Quá thời gian xử lý. Video có thể quá dài hoặc server đang quá tải.';
+      errorMessage = 'Quá thời gian xử lý.';
     }
     
     res.status(500).json({
@@ -499,15 +559,12 @@ app.get("/download", async (req, res) => {
       details: errorDetails || err.message,
       meta: {
         timestamp: Date.now(),
-        version: "2.2.1"
+        version: "2.5.0"
       }
     });
   }
 });
 
-/**
- * Serve file đã download
- */
 app.get("/downloads/:filename", (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(DOWNLOAD_DIR, filename);
@@ -526,14 +583,10 @@ app.get("/downloads/:filename", (req, res) => {
   });
 });
 
-/**
- * Endpoint kiểm tra trạng thái yt-dlp
- */
 app.get("/download/status", async (req, res) => {
   try {
     const version = await checkYtDlp();
     
-    // Đếm file trong thư mục downloads
     let files = [];
     try {
       files = fs.readdirSync(DOWNLOAD_DIR);
@@ -543,14 +596,12 @@ app.get("/download/status", async (req, res) => {
       success: true,
       data: {
         yt_dlp_version: version,
-        download_dir: DOWNLOAD_DIR,
-        files_count: files.length,
-        files: files.slice(0, 10)
+        files_count: files.length
       },
       meta: {
         endpoint: "/download/status",
         timestamp: Date.now(),
-        version: "2.2.1"
+        version: "2.5.0"
       }
     });
 
@@ -558,30 +609,92 @@ app.get("/download/status", async (req, res) => {
     res.json({
       success: false,
       error: 'yt-dlp chưa được cài đặt',
-      solution: 'Vui lòng cài đặt: pip install yt-dlp',
       meta: {
         timestamp: Date.now(),
-        version: "2.2.1"
+        version: "2.5.0"
       }
     });
   }
 });
 
+// ==================== UPLOAD ENDPOINT (DUY NHẤT) ====================
+
+/**
+ * Upload file - Hỗ trợ tất cả các loại file, giới hạn 250MB
+ */
+app.post("/upload", upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'Không có file nào được upload'
+      });
+    }
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    
+    // Tính dung lượng
+    const totalSize = getFolderSize(UPLOAD_DIR);
+    const usagePercent = (totalSize / MAX_DISK_USAGE * 100).toFixed(1);
+
+    res.json({
+      success: true,
+      data: {
+        file: {
+          filename: req.file.filename,
+          originalname: req.file.originalname,
+          size: req.file.size,
+          size_mb: (req.file.size / 1024 / 1024).toFixed(2),
+          mimetype: req.file.mimetype,
+          url: fileUrl,
+          uploaded_at: new Date().toISOString()
+        },
+        storage: {
+          used: (totalSize / 1024 / 1024).toFixed(2) + ' MB',
+          total: (MAX_DISK_USAGE / 1024 / 1024).toFixed(0) + ' MB',
+          usage_percent: usagePercent + '%'
+        }
+      },
+      meta: {
+        endpoint: "/upload",
+        timestamp: Date.now(),
+        version: "2.5.0"
+      }
+    });
+
+    // Kiểm tra và dọn dẹp nếu cần
+    checkAndCleanDisk();
+
+  } catch (err) {
+    console.error('Lỗi upload:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      meta: {
+        timestamp: Date.now(),
+        version: "2.5.0"
+      }
+    });
+  }
+});
+
+/**
+ * Serve uploaded files
+ */
+app.use("/uploads", express.static(UPLOAD_DIR));
+
 // ==================== ENDPOINTS CHÍNH ====================
 
-// Image endpoints
 app.get("/girl", (req, res) => handleImageEndpoint(req, res, "girl", KEYWORDS.girl));
 app.get("/boy", (req, res) => handleImageEndpoint(req, res, "boy", KEYWORDS.boy));
 app.get("/cosplay", (req, res) => handleImageEndpoint(req, res, "cosplay", KEYWORDS.cosplay));
 app.get("/anime", (req, res) => handleImageEndpoint(req, res, "anime", KEYWORDS.anime));
-
-// Endpoint GURA
 app.get("/gura", (req, res) => handleGura(req, res, cache, searchPinterestImages));
 
 // ==================== UTILITY ENDPOINTS ====================
 
 app.get("/stats", (req, res) => {
-  // Đếm file downloads
+  const uploadSize = getFolderSize(UPLOAD_DIR);
   let downloadCount = 0;
   try {
     const files = fs.readdirSync(DOWNLOAD_DIR);
@@ -599,16 +712,24 @@ app.get("/stats", (req, res) => {
         cosplay: cache.cosplay.images.length,
         anime: cache.anime.images.length,
         gura: cache.gura?.images.length || 0,
-        vdgai: cache.vdgai.videos.length,
-        downloads: downloadCount
+        vdgai: cache.vdgai.videos.length
+      },
+      uploads: {
+        count: fs.readdirSync(UPLOAD_DIR).length,
+        size_mb: (uploadSize / 1024 / 1024).toFixed(2),
+        limit_mb: (MAX_DISK_USAGE / 1024 / 1024).toFixed(0),
+        usage_percent: (uploadSize / MAX_DISK_USAGE * 100).toFixed(1) + '%'
+      },
+      downloads: {
+        count: downloadCount
       },
       uptime: process.uptime(),
-      version: "2.2.1",
+      version: "2.5.0",
       environment: isRender ? "render" : "local"
     },
     meta: { 
       timestamp: Date.now(), 
-      version: "2.2.1" 
+      version: "2.5.0" 
     }
   });
 });
@@ -617,12 +738,9 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "2.2.1",
+    version: "2.5.0",
     environment: isRender ? "render" : "local",
-    endpoints: [
-      "/girl", "/boy", "/cosplay", "/anime", "/gura", 
-      "/vdgai", "/download", "/download/status", "/stats", "/health"
-    ]
+    endpoints: ["/girl", "/boy", "/cosplay", "/anime", "/gura", "/vdgai", "/upload", "/download", "/stats", "/health"]
   });
 });
 
@@ -630,26 +748,17 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║           TMK API v2.2.1                 ║
+║           TMK API v2.5.0                 ║
 ║        Professional Image & Video        ║
 ╠══════════════════════════════════════════╣
-║  📸 Image Endpoints:                      ║
-║  ├─ /girl     → Beautiful girls          ║
-║  ├─ /boy      → Handsome boys            ║
-║  ├─ /cosplay  → Cosplay characters       ║
-║  ├─ /anime    → Anime & manga            ║
-║  └─ /gura     🦈 Gawr Gura images        ║
+║  📸 Images: /girl, /boy, /cosplay, /anime, /gura  ║
+║  🎬 Videos: /vdgai                                ║
+║  📥 Download: /download?url=...                   ║
+║  📤 Upload: /upload (max 250MB, auto cleanup)     ║
 ╠══════════════════════════════════════════╣
-║  🎬 Video Endpoints:                      ║
-║  └─ /vdgai    → Video collection         ║
-╠══════════════════════════════════════════╣
-║  📥 Download Endpoint (Đã fix):           ║
-║  └─ /download?url=...  → Tự động chọn    ║
-║                     format tốt nhất      ║
-╠══════════════════════════════════════════╣
-║  ✅ Hỗ trợ: YouTube, Facebook, TikTok    ║
-║  ⚡ Status: ✅ Running                     ║
-║  🌐 Environment: ${isRender ? 'Render' : 'Local'}                   ║
+║  💾 Upload limit: 250MB/file                       ║
+║  🧹 Auto cleanup when disk >80% full               ║
+║  ⚡ Status: ✅ Running                               ║
 ╚══════════════════════════════════════════╝
   `);
 });

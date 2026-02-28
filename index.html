@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TMK API · Professional Image & Video Service</title>
+  <title>TMK API · Professional Image, Video & Upload</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -230,6 +230,10 @@
       background: #f97316;
     }
 
+    .method.upload {
+      background: #4f46e5;
+    }
+
     .endpoint-desc {
       color: #94a3b8;
       font-size: 14px;
@@ -329,6 +333,16 @@
       transform: translateY(-2px);
     }
 
+    .btn-upload {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .btn-upload:hover {
+      background: #4338ca;
+      transform: translateY(-2px);
+    }
+
     .demo {
       background: rgba(0, 0, 0, 0.2);
       border-radius: 32px;
@@ -380,6 +394,10 @@
 
     .demo-tab.download.active {
       background: #f97316;
+    }
+
+    .demo-tab.upload.active {
+      background: #4f46e5;
     }
 
     .preview-frame {
@@ -462,7 +480,7 @@
       border-color: #4f46e5;
     }
 
-    .download-result {
+    .download-result, .upload-result {
       margin-top: 24px;
       padding: 24px;
       background: rgba(79, 70, 229, 0.1);
@@ -471,12 +489,12 @@
       word-break: break-all;
     }
 
-    .download-result a {
+    .download-result a, .upload-result a {
       color: #4f46e5;
       text-decoration: none;
     }
 
-    .download-result a:hover {
+    .download-result a:hover, .upload-result a:hover {
       text-decoration: underline;
     }
 
@@ -494,6 +512,36 @@
     .video-info p {
       color: #94a3b8;
       font-size: 14px;
+    }
+
+    .upload-area {
+      border: 2px dashed #4f46e5;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-area:hover {
+      background: rgba(79, 70, 229, 0.1);
+      border-color: #818cf8;
+    }
+
+    .upload-area i {
+      font-size: 48px;
+      color: #4f46e5;
+      margin-bottom: 16px;
+    }
+
+    .upload-area p {
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .upload-area small {
+      color: #64748b;
+      font-size: 12px;
     }
 
     .footer {
@@ -561,7 +609,7 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v2.2.0</span>
+          <span class="version">v2.5.0</span>
           <span><i class="far fa-clock"></i> 30min cache</span>
           <span><i class="fas fa-bolt"></i> 99.9% uptime</span>
         </div>
@@ -569,8 +617,8 @@
     </header>
 
     <section class="hero">
-      <h2>Professional Image & Video Service</h2>
-      <p>High-quality images from Pinterest, video collection, and smart downloader - just paste any video URL to get info + download link.</p>
+      <h2>Professional Image, Video & Upload Service</h2>
+      <p>High-quality images from Pinterest, video collection, smart downloader, and file upload with auto cleanup. All in one API.</p>
       
       <div class="stats">
         <div class="stat-item">
@@ -616,7 +664,6 @@
           <button class="btn btn-outline" onclick="testEndpoint('girl')">🔍 Test</button>
         </div>
       </div>
-
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/boy</span>
@@ -629,7 +676,6 @@
           <button class="btn btn-outline" onclick="testEndpoint('boy')">🔍 Test</button>
         </div>
       </div>
-
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/cosplay</span>
@@ -642,7 +688,6 @@
           <button class="btn btn-outline" onclick="testEndpoint('cosplay')">🔍 Test</button>
         </div>
       </div>
-
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/anime</span>
@@ -655,7 +700,6 @@
           <button class="btn btn-outline" onclick="testEndpoint('anime')">🔍 Test</button>
         </div>
       </div>
-
       <div class="endpoint-card">
         <div class="endpoint-header">
           <span class="endpoint-path">/gura</span>
@@ -697,7 +741,7 @@
           <span class="endpoint-path">/download</span>
           <span class="method download">GET</span>
         </div>
-        <div class="endpoint-desc">Get video info + download link (YouTube, TikTok, etc.)</div>
+        <div class="endpoint-desc">Get video info + download link (YouTube, TikTok, Facebook...)</div>
         <div class="code-block"><span class="code-line">GET /download?url=VIDEO_URL</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('download?url=')">📋 Copy</button>
@@ -706,7 +750,31 @@
       </div>
     </div>
 
-    <!-- Live Demo -->
+    <div class="section-title">
+      <i class="fas fa-upload"></i> Upload Endpoint
+    </div>
+    <div class="endpoints">
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/upload</span>
+          <span class="method upload">POST</span>
+        </div>
+        <div class="endpoint-desc">Upload any file (max 250MB, auto cleanup when disk >80% full)</div>
+        <div>
+          <span class="keyword-tag">form-data</span>
+          <span class="keyword-tag">file</span>
+          <span class="keyword-tag">250MB</span>
+        </div>
+        <div class="code-block">
+          <span class="code-line">curl -X POST -F "file=@video.mp4" https://tmk-qzph.onrender.com/upload</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('upload')">📋 Copy URL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Demo Tabs -->
     <div class="demo">
       <div class="demo-header">
         <div>
@@ -721,12 +789,14 @@
           <button class="demo-tab" data-type="gura" onclick="switchDemo('gura')">Gura</button>
           <button class="demo-tab video" data-type="vdgai" onclick="switchDemo('vdgai')">Video</button>
           <button class="demo-tab download" data-type="download" onclick="showDownloadDemo()">Download</button>
+          <button class="demo-tab upload" data-type="upload" onclick="showUploadDemo()">Upload</button>
         </div>
         <button class="btn btn-primary" onclick="refreshDemo()">
           <i class="fas fa-sync-alt"></i> Refresh
         </button>
       </div>
 
+      <!-- Preview Frame (for images/videos) -->
       <div class="preview-frame" id="previewFrame">
         <div class="loading" id="loading" style="display: none;">
           <div class="spinner"></div>
@@ -746,7 +816,7 @@
       <!-- Download Demo -->
       <div id="downloadDemo" style="display: none;">
         <div class="download-form">
-          <input type="text" class="download-input" id="downloadUrl" placeholder="Paste YouTube/TikTok URL here...">
+          <input type="text" class="download-input" id="downloadUrl" placeholder="Paste YouTube/TikTok/Facebook URL here...">
           <button class="btn btn-download" onclick="processDownload()">
             <i class="fas fa-download"></i> Get Video
           </button>
@@ -757,10 +827,21 @@
           <a href="#" id="downloadLink" target="_blank"></a>
         </div>
       </div>
+
+      <!-- Upload Demo -->
+      <div id="uploadDemo" style="display: none;">
+        <div class="upload-area" onclick="document.getElementById('uploadFile').click()">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Click to upload or drag and drop</p>
+          <p style="font-size: 12px; color: #64748b;">Any file type · Max 250MB</p>
+          <input type="file" id="uploadFile" style="display: none;">
+        </div>
+        <div class="upload-result" id="uploadResult" style="display: none;"></div>
+      </div>
     </div>
 
     <footer class="footer">
-      <div>© 2026 TMK API · Professional Image & Video Service</div>
+      <div>© 2026 TMK API · Professional Image, Video & Upload Service</div>
       <div class="footer-links">
         <a onclick="copyUrl('girl')">girl</a>
         <a onclick="copyUrl('boy')">boy</a>
@@ -768,6 +849,8 @@
         <a onclick="copyUrl('anime')">anime</a>
         <a onclick="copyUrl('gura')">gura</a>
         <a onclick="copyUrl('vdgai')">vdgai</a>
+        <a onclick="copyUrl('download?url=')">download</a>
+        <a onclick="copyUrl('upload')">upload</a>
         <a href="/stats">stats</a>
       </div>
       <div>
@@ -781,6 +864,7 @@
     const baseUrl = window.location.origin;
     let currentType = 'girl';
 
+    // Copy URL
     function copyUrl(endpoint) {
       const url = `${baseUrl}/${endpoint}`;
       navigator.clipboard.writeText(url).then(() => {
@@ -788,16 +872,19 @@
       });
     }
 
+    // Test endpoint in new tab
     function testEndpoint(endpoint) {
       window.open(`${baseUrl}/${endpoint}`, '_blank');
     }
 
+    // Switch demo tabs
     function switchDemo(type) {
       currentType = type;
       document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`.demo-tab[data-type="${type}"]`).classList.add('active');
       
       document.getElementById('downloadDemo').style.display = 'none';
+      document.getElementById('uploadDemo').style.display = 'none';
       document.getElementById('previewFrame').style.display = 'flex';
       document.getElementById('previewInfo').style.display = 'block';
       
@@ -811,17 +898,32 @@
       
       document.getElementById('previewFrame').style.display = 'none';
       document.getElementById('previewInfo').style.display = 'none';
+      document.getElementById('uploadDemo').style.display = 'none';
       document.getElementById('downloadDemo').style.display = 'block';
+    }
+
+    function showUploadDemo() {
+      currentType = 'upload';
+      document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector('.demo-tab.upload').classList.add('active');
+      
+      document.getElementById('previewFrame').style.display = 'none';
+      document.getElementById('previewInfo').style.display = 'none';
+      document.getElementById('downloadDemo').style.display = 'none';
+      document.getElementById('uploadDemo').style.display = 'block';
     }
 
     function refreshDemo() {
       if (currentType === 'download') {
-        // Không làm gì
+        // nothing to refresh
+      } else if (currentType === 'upload') {
+        // nothing to refresh
       } else {
         fetchAndDisplay(currentType);
       }
     }
 
+    // Fetch and display image/video
     async function fetchAndDisplay(type) {
       const previewFrame = document.getElementById('previewFrame');
       const loading = document.getElementById('loading');
@@ -874,6 +976,7 @@
       }
     }
 
+    // Download handler
     async function processDownload() {
       const url = document.getElementById('downloadUrl').value;
       if (!url) {
@@ -894,7 +997,6 @@
           const video = data.data.video;
           const download = data.data.download;
           
-          // Format duration
           const minutes = Math.floor(video.duration / 60);
           const seconds = video.duration % 60;
           const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -902,7 +1004,7 @@
           document.getElementById('videoInfo').innerHTML = `
             <h4>${video.title}</h4>
             <p>📤 ${video.uploader} · 👁️ ${video.views?.toLocaleString()} views · ⏱️ ${duration}</p>
-            <p>📦 ${(download.size / 1024 / 1024).toFixed(2)} MB · ⏳ Expires in 30 minutes</p>
+            <p>📦 ${download.size_mb} MB · ⏳ Expires in 30 minutes</p>
           `;
           
           document.getElementById('downloadLink').href = download.url;
@@ -916,6 +1018,41 @@
         alert('Lỗi kết nối: ' + err.message);
       }
     }
+
+    // Upload handler
+    document.getElementById('uploadFile').addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const resultDiv = document.getElementById('uploadResult');
+      resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><div>Uploading...</div></div>';
+      resultDiv.style.display = 'block';
+      
+      try {
+        const res = await fetch(`${baseUrl}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <p><strong>✅ Upload successful!</strong></p>
+            <p>📁 File: ${data.data.file.originalname}</p>
+            <p>📦 Size: ${data.data.file.size_mb} MB</p>
+            <p>🔗 URL: <a href="${data.data.file.url}" target="_blank" style="color: #4f46e5;">${data.data.file.url}</a></p>
+            <p>💾 Storage: ${data.data.storage.used} / ${data.data.storage.total} (${data.data.storage.usage_percent})</p>
+          `;
+        } else {
+          resultDiv.innerHTML = `<p style="color: #ef4444;">❌ Error: ${data.error}</p>`;
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color: #ef4444;">❌ Error: ${err.message}</p>`;
+      }
+    });
 
     // Request counter
     if (localStorage.getItem('tmkCount')) {
