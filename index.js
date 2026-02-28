@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ==================== KIỂM TRA MÔI TRƯỜNG ====================
 const isRender = process.env.RENDER === "true" || process.env.RENDER === "1";
-console.log(`🚀 TMK API v2.2.0 chạy trên: ${isRender ? 'Render' : 'Local'}`);
+console.log(`🚀 TMK API v2.2.1 chạy trên: ${isRender ? 'Render' : 'Local'}`);
 
 // ==================== CẤU HÌNH DOWNLOAD ====================
 
@@ -81,6 +81,7 @@ let cache = {
   anime: { images: [], lastFetch: 0 },
   gura: { images: [], lastFetch: 0 },
   vdgai: { videos: videoUrls, lastFetch: Date.now() },
+  downloads: {},
   ttl: 30 * 60 * 1000, // 30 phút
   stats: {
     requests: 0,
@@ -201,7 +202,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "2.2.0"
+          version: "2.2.1"
         }
       });
     }
@@ -229,7 +230,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "2.2.0"
+          version: "2.2.1"
         }
       });
     } else {
@@ -255,7 +256,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           source: "fallback",
           total: 1,
           timestamp: Date.now(),
-          version: "2.2.0"
+          version: "2.2.1"
         }
       });
     }
@@ -273,7 +274,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         category: "image",
         source: "error",
         timestamp: Date.now(),
-        version: "2.2.0"
+        version: "2.2.1"
       }
     });
   }
@@ -292,7 +293,7 @@ app.get("/vdgai", (req, res) => {
         meta: { 
           endpoint: "/vdgai", 
           timestamp: Date.now(), 
-          version: "2.2.0" 
+          version: "2.2.1" 
         }
       });
     }
@@ -313,7 +314,7 @@ app.get("/vdgai", (req, res) => {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "2.2.0"
+        version: "2.2.1"
       }
     });
   } catch (err) {
@@ -324,17 +325,14 @@ app.get("/vdgai", (req, res) => {
       meta: { 
         endpoint: "/vdgai", 
         timestamp: Date.now(), 
-        version: "2.2.0" 
+        version: "2.2.1" 
       }
     });
   }
 });
 
-// ==================== DOWNLOAD ENDPOINT DUY NHẤT ====================
+// ==================== KIỂM TRA YT-DLP ====================
 
-/**
- * Kiểm tra yt-dlp đã được cài đặt chưa
- */
 function checkYtDlp() {
   return new Promise((resolve, reject) => {
     exec('yt-dlp --version', (error, stdout) => {
@@ -347,10 +345,8 @@ function checkYtDlp() {
   });
 }
 
-/**
- * Endpoint download duy nhất - trả về đầy đủ thông tin
- * GET /download?url=VIDEO_URL
- */
+// ==================== DOWNLOAD ENDPOINT (ĐÃ FIX) ====================
+
 app.get("/download", async (req, res) => {
   let outputPath = null;
   
@@ -383,13 +379,18 @@ app.get("/download", async (req, res) => {
     const filename = `video_${fileId}.mp4`;
     outputPath = path.join(DOWNLOAD_DIR, filename);
 
-    // Lấy thông tin video trước
-    const infoCommand = `yt-dlp -j --no-playlist "${url}"`;
+    // ===== BƯỚC 1: LẤY THÔNG TIN VIDEO =====
+    // Sử dụng format "best" để lấy thông tin từ format tốt nhất
+    const infoCommand = `yt-dlp -f "best" -j --no-playlist "${url}"`;
+    
+    console.log(`📋 Đang lấy thông tin video từ: ${new URL(url).hostname}`);
     
     const info = await new Promise((resolve, reject) => {
       exec(infoCommand, { timeout: 30000 }, (error, stdout) => {
-        if (error) reject(error);
-        else {
+        if (error) {
+          console.error('Info command error:', error.message);
+          reject(error);
+        } else {
           try {
             resolve(JSON.parse(stdout));
           } catch (e) {
@@ -399,15 +400,21 @@ app.get("/download", async (req, res) => {
       });
     });
 
-    // Tải video chất lượng vừa phải
-    const downloadCommand = `yt-dlp -f "best[height<=720][ext=mp4]" -o "${outputPath}" "${url}"`;
-    
+    // ===== BƯỚC 2: TẢI VIDEO =====
+    // Sử dụng format "best" - yt-dlp tự chọn format tốt nhất có sẵn
+    // Không ép buộc mp4 hay độ phân giải cụ thể để tránh lỗi Facebook
     console.log(`📥 Đang tải video: ${info.title}`);
+    
+    const downloadCommand = `yt-dlp -f "best" -o "${outputPath}" "${url}"`;
     
     await new Promise((resolve, reject) => {
       exec(downloadCommand, { timeout: 120000 }, (error) => {
-        if (error) reject(error);
-        else resolve();
+        if (error) {
+          console.error('Download command error:', error.message);
+          reject(error);
+        } else {
+          resolve();
+        }
       });
     });
 
@@ -417,35 +424,45 @@ app.get("/download", async (req, res) => {
     }
 
     const stats = fs.statSync(outputPath);
+    
+    // Xác định nền tảng
+    const urlObj = new URL(url);
+    let platform = urlObj.hostname.replace('www.', '');
+    if (platform.includes('youtube.com') || platform.includes('youtu.be')) platform = 'youtube';
+    if (platform.includes('facebook.com') || platform.includes('fb.com')) platform = 'facebook';
+    if (platform.includes('tiktok.com')) platform = 'tiktok';
+    if (platform.includes('instagram.com')) platform = 'instagram';
+    if (platform.includes('twitter.com') || platform.includes('x.com')) platform = 'twitter';
 
     // Trả về đầy đủ thông tin + link download
     res.json({
       success: true,
       data: {
         video: {
-          title: info.title,
-          duration: info.duration,
-          uploader: info.uploader,
-          views: info.view_count,
-          thumbnail: info.thumbnail,
-          description: info.description?.substring(0, 200) + '...'
+          title: info.title || 'Không có tiêu đề',
+          duration: info.duration || 0,
+          uploader: info.uploader || info.uploader_id || 'Không rõ',
+          views: info.view_count || 0,
+          thumbnail: info.thumbnail || '',
+          description: info.description ? (info.description.substring(0, 200) + (info.description.length > 200 ? '...' : '')) : '',
+          platform: platform
         },
         download: {
           url: `${req.protocol}://${req.get("host")}/downloads/${filename}`,
           filename: filename,
           size: stats.size,
+          size_mb: (stats.size / 1024 / 1024).toFixed(2),
           expires_in: "30 phút"
         }
       },
       meta: {
         endpoint: "/download",
         timestamp: Date.now(),
-        version: "2.2.0"
+        version: "2.2.1"
       }
     });
 
-    // Lưu thông tin vào cache để sau này serve file
-    cache.downloads = cache.downloads || {};
+    // Lưu thông tin vào cache
     cache.downloads[filename] = {
       path: outputPath,
       info: info,
@@ -453,13 +470,37 @@ app.get("/download", async (req, res) => {
     };
 
   } catch (err) {
-    console.error('❌ Lỗi:', err);
+    console.error('❌ Lỗi chi tiết:', err.message);
+    
+    // Xóa file nếu có lỗi
     if (outputPath && fs.existsSync(outputPath)) {
       fs.unlinkSync(outputPath);
     }
+    
+    // Phân tích lỗi để đưa ra thông báo phù hợp
+    let errorMessage = err.message;
+    let errorDetails = '';
+    
+    if (err.message.includes('Requested format is not available')) {
+      errorMessage = 'Định dạng video không khả dụng. Vui lòng thử lại với URL khác.';
+      errorDetails = 'Facebook thường có nhiều định dạng, thử lại lần nữa có thể thành công.';
+    } else if (err.message.includes('Sign in to confirm') || err.message.includes('bot')) {
+      errorMessage = 'YouTube yêu cầu xác thực chống bot.';
+      errorDetails = 'Vui lòng thử với video TikTok hoặc nền tảng khác.';
+    } else if (err.message.includes('Video unavailable')) {
+      errorMessage = 'Video không khả dụng hoặc đã bị xóa.';
+    } else if (err.message.includes('timed out')) {
+      errorMessage = 'Quá thời gian xử lý. Video có thể quá dài hoặc server đang quá tải.';
+    }
+    
     res.status(500).json({
       success: false,
-      error: err.message
+      error: errorMessage,
+      details: errorDetails || err.message,
+      meta: {
+        timestamp: Date.now(),
+        version: "2.2.1"
+      }
     });
   }
 });
@@ -482,7 +523,6 @@ app.get("/downloads/:filename", (req, res) => {
     if (err) {
       console.error('❌ Lỗi gửi file:', err);
     }
-    // Không xóa ngay, để cron dọn sau
   });
 });
 
@@ -510,7 +550,7 @@ app.get("/download/status", async (req, res) => {
       meta: {
         endpoint: "/download/status",
         timestamp: Date.now(),
-        version: "2.2.0"
+        version: "2.2.1"
       }
     });
 
@@ -518,7 +558,11 @@ app.get("/download/status", async (req, res) => {
     res.json({
       success: false,
       error: 'yt-dlp chưa được cài đặt',
-      solution: 'Vui lòng cài đặt: pip install yt-dlp'
+      solution: 'Vui lòng cài đặt: pip install yt-dlp',
+      meta: {
+        timestamp: Date.now(),
+        version: "2.2.1"
+      }
     });
   }
 });
@@ -559,12 +603,12 @@ app.get("/stats", (req, res) => {
         downloads: downloadCount
       },
       uptime: process.uptime(),
-      version: "2.2.0",
+      version: "2.2.1",
       environment: isRender ? "render" : "local"
     },
     meta: { 
       timestamp: Date.now(), 
-      version: "2.2.0" 
+      version: "2.2.1" 
     }
   });
 });
@@ -573,7 +617,7 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "2.2.0",
+    version: "2.2.1",
     environment: isRender ? "render" : "local",
     endpoints: [
       "/girl", "/boy", "/cosplay", "/anime", "/gura", 
@@ -586,7 +630,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║           TMK API v2.2.0                 ║
+║           TMK API v2.2.1                 ║
 ║        Professional Image & Video        ║
 ╠══════════════════════════════════════════╣
 ║  📸 Image Endpoints:                      ║
@@ -599,9 +643,11 @@ app.listen(PORT, () => {
 ║  🎬 Video Endpoints:                      ║
 ║  └─ /vdgai    → Video collection         ║
 ╠══════════════════════════════════════════╣
-║  📥 Download Endpoint:                    ║
-║  └─ /download?url=...  → Video info + link║
+║  📥 Download Endpoint (Đã fix):           ║
+║  └─ /download?url=...  → Tự động chọn    ║
+║                     format tốt nhất      ║
 ╠══════════════════════════════════════════╣
+║  ✅ Hỗ trợ: YouTube, Facebook, TikTok    ║
 ║  ⚡ Status: ✅ Running                     ║
 ║  🌐 Environment: ${isRender ? 'Render' : 'Local'}                   ║
 ╚══════════════════════════════════════════╝
