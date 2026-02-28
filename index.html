@@ -20,15 +20,13 @@
       background: linear-gradient(145deg, #0a0c14 0%, #141824 100%);
       color: #ffffff;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       padding: 20px;
     }
 
     .container {
       max-width: 1400px;
       width: 100%;
+      margin: 0 auto;
       background: rgba(20, 25, 40, 0.8);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -228,6 +226,10 @@
       background: #ec4899;
     }
 
+    .method.download {
+      background: #f97316;
+    }
+
     .endpoint-desc {
       color: #94a3b8;
       font-size: 14px;
@@ -254,14 +256,16 @@
       padding: 16px;
       margin: 20px 0;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 12px;
       color: #e2e8f0;
       border: 1px solid rgba(255, 255, 255, 0.05);
+      overflow-x: auto;
     }
 
     .code-line {
       display: block;
       line-height: 1.8;
+      white-space: nowrap;
     }
 
     .actions {
@@ -315,6 +319,16 @@
       transform: translateY(-2px);
     }
 
+    .btn-download {
+      background: #f97316;
+      color: white;
+    }
+
+    .btn-download:hover {
+      background: #ea580c;
+      transform: translateY(-2px);
+    }
+
     .demo {
       background: rgba(0, 0, 0, 0.2);
       border-radius: 32px;
@@ -362,6 +376,10 @@
 
     .demo-tab.video.active {
       background: #ec4899;
+    }
+
+    .demo-tab.download.active {
+      background: #f97316;
     }
 
     .preview-frame {
@@ -421,6 +439,47 @@
       color: #4f46e5;
     }
 
+    .download-form {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .download-input {
+      flex: 1;
+      padding: 16px 24px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      color: white;
+      font-size: 14px;
+      min-width: 300px;
+    }
+
+    .download-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+
+    .download-result {
+      margin-top: 24px;
+      padding: 20px;
+      background: rgba(79, 70, 229, 0.1);
+      border-radius: 20px;
+      border: 1px solid #4f46e5;
+      word-break: break-all;
+    }
+
+    .download-result a {
+      color: #4f46e5;
+      text-decoration: none;
+    }
+
+    .download-result a:hover {
+      text-decoration: underline;
+    }
+
     .footer {
       display: flex;
       justify-content: space-between;
@@ -473,6 +532,10 @@
       .hero h2 {
         font-size: 28px;
       }
+      
+      .download-form {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -482,7 +545,7 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v1.2.8</span>
+          <span class="version">v2.1.0</span>
           <span><i class="far fa-clock"></i> 30min cache</span>
           <span><i class="fas fa-bolt"></i> 99.9% uptime</span>
         </div>
@@ -490,8 +553,8 @@
     </header>
 
     <section class="hero">
-      <h2>Professional Image & Video API</h2>
-      <p>High-quality content from Pinterest with intelligent caching. Simple REST endpoints for girls, boys, cosplay, anime, Gura, and video collection.</p>
+      <h2>Professional Image & Video API with Downloader</h2>
+      <p>High-quality content from Pinterest, video collection, and YouTube/TikTok downloader powered by yt-dlp.</p>
       
       <div class="stats">
         <div class="stat-item">
@@ -531,12 +594,6 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Beautiful girls, models, asian girls</div>
-        <div>
-          <span class="keyword-tag">girl</span>
-          <span class="keyword-tag">beautiful</span>
-          <span class="keyword-tag">asian</span>
-          <span class="keyword-tag">model</span>
-        </div>
         <div class="code-block"><span class="code-line">GET /girl</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('girl')">📋 Copy</button>
@@ -550,12 +607,6 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Handsome boys, models, asian boys</div>
-        <div>
-          <span class="keyword-tag">boy</span>
-          <span class="keyword-tag">handsome</span>
-          <span class="keyword-tag">asian</span>
-          <span class="keyword-tag">model</span>
-        </div>
         <div class="code-block"><span class="code-line">GET /boy</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('boy')">📋 Copy</button>
@@ -569,11 +620,6 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Cosplay, anime, game characters</div>
-        <div>
-          <span class="keyword-tag">cosplay</span>
-          <span class="keyword-tag">anime</span>
-          <span class="keyword-tag">game</span>
-        </div>
         <div class="code-block"><span class="code-line">GET /cosplay</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('cosplay')">📋 Copy</button>
@@ -587,11 +633,6 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Anime, manga, waifu, cute anime</div>
-        <div>
-          <span class="keyword-tag">anime</span>
-          <span class="keyword-tag">manga</span>
-          <span class="keyword-tag">waifu</span>
-        </div>
         <div class="code-block"><span class="code-line">GET /anime</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('anime')">📋 Copy</button>
@@ -605,12 +646,6 @@
           <span class="method">GET</span>
         </div>
         <div class="endpoint-desc">Gawr Gura - Hololive EN shark girl 🦈</div>
-        <div>
-          <span class="keyword-tag">gawr gura</span>
-          <span class="keyword-tag">hololive</span>
-          <span class="keyword-tag">shark</span>
-          <span class="keyword-tag">vtuber</span>
-        </div>
         <div class="code-block"><span class="code-line">GET /gura</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('gura')">📋 Copy</button>
@@ -629,11 +664,6 @@
           <span class="method video">GET</span>
         </div>
         <div class="endpoint-desc">Random video from collection (450+ videos)</div>
-        <div>
-          <span class="keyword-tag">video</span>
-          <span class="keyword-tag">mp4</span>
-          <span class="keyword-tag">collection</span>
-        </div>
         <div class="code-block"><span class="code-line">GET /vdgai</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('vdgai')">📋 Copy</button>
@@ -642,6 +672,49 @@
       </div>
     </div>
 
+    <div class="section-title">
+      <i class="fas fa-download"></i> Download Endpoints
+    </div>
+    <div class="endpoints">
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/download</span>
+          <span class="method download">GET</span>
+        </div>
+        <div class="endpoint-desc">Get direct download link (YouTube, TikTok, etc.)</div>
+        <div class="code-block"><span class="code-line">GET /download?url=VIDEO_URL</span></div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('download?url=')">📋 Copy</button>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/download/file</span>
+          <span class="method download">GET</span>
+        </div>
+        <div class="endpoint-desc">Download video directly to your device</div>
+        <div class="code-block"><span class="code-line">GET /download/file?url=VIDEO_URL</span></div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('download/file?url=')">📋 Copy</button>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="endpoint-path">/info</span>
+          <span class="method download">GET</span>
+        </div>
+        <div class="endpoint-desc">Get video information (title, duration, uploader)</div>
+        <div class="code-block"><span class="code-line">GET /info?url=VIDEO_URL</span></div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="copyUrl('info?url=')">📋 Copy</button>
+          <button class="btn btn-outline" onclick="testEndpoint('download/status')">🔍 Status</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Demo -->
     <div class="demo">
       <div class="demo-header">
         <div>
@@ -655,6 +728,7 @@
           <button class="demo-tab" data-type="anime" onclick="switchDemo('anime')">Anime</button>
           <button class="demo-tab" data-type="gura" onclick="switchDemo('gura')">Gura</button>
           <button class="demo-tab video" data-type="vdgai" onclick="switchDemo('vdgai')">Video</button>
+          <button class="demo-tab download" data-type="download" onclick="showDownloadDemo()">Download</button>
         </div>
         <button class="btn btn-primary" onclick="refreshDemo()">
           <i class="fas fa-sync-alt"></i> Refresh
@@ -671,10 +745,29 @@
              alt="Preview"
              style="display: block;">
       </div>
-      <div class="preview-info">
+      <div class="preview-info" id="previewInfo">
         <span>🔍 Endpoint: <strong id="currentEndpoint">/girl</strong></span>
         <span style="margin: 0 12px;">·</span>
         <span>Keyword: <strong id="currentKeyword">girl</strong></span>
+      </div>
+
+      <!-- Download Demo (ẩn mặc định) -->
+      <div id="downloadDemo" style="display: none;">
+        <div class="download-form">
+          <input type="text" class="download-input" id="downloadUrl" placeholder="Paste YouTube/TikTok URL here...">
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-download" onclick="getDownloadLink()">
+              <i class="fas fa-link"></i> Get Link
+            </button>
+            <button class="btn btn-download" onclick="downloadVideo()">
+              <i class="fas fa-download"></i> Download
+            </button>
+          </div>
+        </div>
+        <div class="download-result" id="downloadResult" style="display: none;">
+          <p><strong>Download Link:</strong></p>
+          <a href="#" id="downloadLink" target="_blank"></a>
+        </div>
       </div>
     </div>
 
@@ -715,11 +808,32 @@
       currentType = type;
       document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`.demo-tab[data-type="${type}"]`).classList.add('active');
+      
+      // Ẩn download demo, hiện preview bình thường
+      document.getElementById('downloadDemo').style.display = 'none';
+      document.getElementById('previewFrame').style.display = 'flex';
+      document.getElementById('previewInfo').style.display = 'block';
+      
       fetchAndDisplay(type);
     }
 
+    function showDownloadDemo() {
+      currentType = 'download';
+      document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector('.demo-tab.download').classList.add('active');
+      
+      // Ẩn preview, hiện download demo
+      document.getElementById('previewFrame').style.display = 'none';
+      document.getElementById('previewInfo').style.display = 'none';
+      document.getElementById('downloadDemo').style.display = 'block';
+    }
+
     function refreshDemo() {
-      fetchAndDisplay(currentType);
+      if (currentType === 'download') {
+        // Không làm gì
+      } else {
+        fetchAndDisplay(currentType);
+      }
     }
 
     async function fetchAndDisplay(type) {
@@ -774,6 +888,40 @@
       }
     }
 
+    async function getDownloadLink() {
+      const url = document.getElementById('downloadUrl').value;
+      if (!url) {
+        alert('Vui lòng nhập URL video');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${baseUrl}/download?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('downloadResult').style.display = 'block';
+          document.getElementById('downloadLink').href = data.data.download_url;
+          document.getElementById('downloadLink').textContent = data.data.download_url;
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (err) {
+        alert('Lỗi kết nối: ' + err.message);
+      }
+    }
+
+    async function downloadVideo() {
+      const url = document.getElementById('downloadUrl').value;
+      if (!url) {
+        alert('Vui lòng nhập URL video');
+        return;
+      }
+      
+      window.open(`${baseUrl}/download/file?url=${encodeURIComponent(url)}`, '_blank');
+    }
+
+    // Request counter
     if (localStorage.getItem('tmkCount')) {
       let count = parseInt(localStorage.getItem('tmkCount')) + 1;
       localStorage.setItem('tmkCount', count);
@@ -783,6 +931,7 @@
       document.getElementById('requestCount').textContent = '1';
     }
 
+    // Auto refresh stats
     setInterval(async () => {
       try {
         const res = await fetch(`${baseUrl}/stats`);

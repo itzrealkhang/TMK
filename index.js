@@ -2,9 +2,18 @@ const express = require("express");
 const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
+const { exec } = require('child_process');
+const crypto = require('crypto');
 
-// Import handler Gura
-const { handleGura } = require("./gura.js");
+// Import handler Gura (nếu có)
+let handleGura = (req, res) => res.json({ success: false, message: "Gura module not loaded" });
+try {
+  const gura = require("./gura.js");
+  handleGura = gura.handleGura;
+  console.log("✅ Đã load module Gura");
+} catch (err) {
+  console.log("ℹ️ Không tìm thấy module Gura, bỏ qua");
+}
 
 // Khởi tạo app
 const app = express();
@@ -12,10 +21,44 @@ const app = express();
 // Middleware
 app.use(express.static(__dirname));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // ==================== KIỂM TRA MÔI TRƯỜNG ====================
-const isVercel = process.env.VERCEL === "1";
-console.log(`🚀 TMK API v1.2.8 chạy trên: ${isVercel ? 'Vercel' : 'Local'}`);
+const isRender = process.env.RENDER === "true" || process.env.RENDER === "1";
+console.log(`🚀 TMK API v2.1.0 chạy trên: ${isRender ? 'Render' : 'Local'}`);
+
+// ==================== CẤU HÌNH DOWNLOAD ====================
+
+// Thư mục downloads
+const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
+if (!fs.existsSync(DOWNLOAD_DIR)) {
+  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+  console.log(`📁 Đã tạo thư mục downloads`);
+}
+
+// Dọn dẹp file cũ mỗi 30 phút
+setInterval(() => {
+  const now = Date.now();
+  const thirtyMinutes = 30 * 60 * 1000;
+  
+  fs.readdir(DOWNLOAD_DIR, (err, files) => {
+    if (err) return;
+    
+    files.forEach(file => {
+      const filePath = path.join(DOWNLOAD_DIR, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) return;
+        
+        // Xóa file cũ hơn 30 phút
+        if (now - stats.mtimeMs > thirtyMinutes) {
+          fs.unlink(filePath, () => {
+            console.log(`🧹 Đã xóa file cũ: ${file}`);
+          });
+        }
+      });
+    });
+  });
+}, 30 * 60 * 1000);
 
 // ==================== ĐỌC FILE VIDEO ====================
 
@@ -158,7 +201,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "1.2.8"
+          version: "2.1.0"
         }
       });
     }
@@ -186,7 +229,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "1.2.8"
+          version: "2.1.0"
         }
       });
     } else {
@@ -212,7 +255,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           source: "fallback",
           total: 1,
           timestamp: Date.now(),
-          version: "1.2.8"
+          version: "2.1.0"
         }
       });
     }
@@ -230,7 +273,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         category: "image",
         source: "error",
         timestamp: Date.now(),
-        version: "1.2.8"
+        version: "2.1.0"
       }
     });
   }
@@ -249,7 +292,7 @@ app.get("/vdgai", (req, res) => {
         meta: { 
           endpoint: "/vdgai", 
           timestamp: Date.now(), 
-          version: "1.2.8" 
+          version: "2.1.0" 
         }
       });
     }
@@ -270,7 +313,7 @@ app.get("/vdgai", (req, res) => {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "1.2.8"
+        version: "2.1.0"
       }
     });
   } catch (err) {
@@ -281,8 +324,277 @@ app.get("/vdgai", (req, res) => {
       meta: { 
         endpoint: "/vdgai", 
         timestamp: Date.now(), 
-        version: "1.2.8" 
+        version: "2.1.0" 
       }
+    });
+  }
+});
+
+// ==================== DOWNLOAD VIDEO ENDPOINTS ====================
+
+/**
+ * Kiểm tra yt-dlp đã được cài đặt chưa
+ */
+function checkYtDlp() {
+  return new Promise((resolve, reject) => {
+    exec('yt-dlp --version', (error, stdout) => {
+      if (error) {
+        reject('yt-dlp chưa được cài đặt');
+      } else {
+        resolve(stdout.trim());
+      }
+    });
+  });
+}
+
+/**
+ * Endpoint 1: Lấy link tải trực tiếp (không lưu trên server)
+ * GET /download?url=VIDEO_URL
+ */
+app.get("/download", async (req, res) => {
+  try {
+    const { url } = req.query;
+    
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thiếu URL video. Vui lòng thêm ?url=link_video'
+      });
+    }
+
+    // Kiểm tra URL
+    try {
+      new URL(url);
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL không hợp lệ'
+      });
+    }
+
+    // Kiểm tra yt-dlp
+    const version = await checkYtDlp();
+    console.log(`✅ yt-dlp version: ${version}`);
+
+    // Lấy link tải trực tiếp
+    const command = `yt-dlp -g -f "best[ext=mp4]" "${url}"`;
+    
+    exec(command, { timeout: 30000 }, (error, stdout) => {
+      if (error) {
+        return res.status(500).json({
+          success: false,
+          error: 'Không thể lấy link tải',
+          details: error.message
+        });
+      }
+
+      const directUrl = stdout.trim();
+      
+      res.json({
+        success: true,
+        data: {
+          download_url: directUrl,
+          title: "Video từ URL",
+          note: "Copy link này và dùng trình duyệt để tải"
+        },
+        meta: {
+          endpoint: "/download",
+          timestamp: Date.now(),
+          version: "2.1.0"
+        }
+      });
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * Endpoint 2: Tải video về server và gửi về client
+ * GET /download/file?url=VIDEO_URL
+ */
+app.get("/download/file", async (req, res) => {
+  let outputPath = null;
+  
+  try {
+    const { url } = req.query;
+    
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thiếu URL video'
+      });
+    }
+
+    // Kiểm tra URL
+    try {
+      new URL(url);
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL không hợp lệ'
+      });
+    }
+
+    // Kiểm tra yt-dlp
+    await checkYtDlp();
+
+    // Tạo tên file ngẫu nhiên
+    const fileId = crypto.randomBytes(8).toString('hex');
+    const filename = `video_${fileId}.mp4`;
+    outputPath = path.join(DOWNLOAD_DIR, filename);
+
+    // Tải video chất lượng thấp để nhanh
+    const command = `yt-dlp -f "worst[ext=mp4]" -o "${outputPath}" "${url}"`;
+    
+    console.log(`📥 Đang tải video: ${url}`);
+    
+    exec(command, { timeout: 120000 }, (error) => {
+      if (error) {
+        console.error('❌ Lỗi tải video:', error);
+        if (outputPath && fs.existsSync(outputPath)) {
+          fs.unlinkSync(outputPath);
+        }
+        return res.status(500).json({
+          success: false,
+          error: 'Tải video thất bại'
+        });
+      }
+
+      // Kiểm tra file đã tồn tại
+      if (!fs.existsSync(outputPath)) {
+        return res.status(500).json({
+          success: false,
+          error: 'File không được tạo'
+        });
+      }
+
+      // Gửi file về client
+      res.download(outputPath, filename, (err) => {
+        if (err) {
+          console.error('❌ Lỗi gửi file:', err);
+        }
+        
+        // Xóa file sau 1 phút
+        setTimeout(() => {
+          if (fs.existsSync(outputPath)) {
+            fs.unlinkSync(outputPath);
+            console.log(`🧹 Đã xóa file: ${filename}`);
+          }
+        }, 60000);
+      });
+    });
+
+  } catch (err) {
+    console.error('❌ Lỗi:', err);
+    if (outputPath && fs.existsSync(outputPath)) {
+      fs.unlinkSync(outputPath);
+    }
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * Endpoint 3: Thông tin video
+ * GET /info?url=VIDEO_URL
+ */
+app.get("/info", async (req, res) => {
+  try {
+    const { url } = req.query;
+    
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thiếu URL video'
+      });
+    }
+
+    await checkYtDlp();
+
+    const command = `yt-dlp -j --no-playlist "${url}"`;
+    
+    exec(command, { timeout: 30000 }, (error, stdout) => {
+      if (error) {
+        return res.status(500).json({
+          success: false,
+          error: 'Không thể lấy thông tin video'
+        });
+      }
+
+      try {
+        const info = JSON.parse(stdout);
+        
+        res.json({
+          success: true,
+          data: {
+            title: info.title,
+            duration: info.duration,
+            uploader: info.uploader,
+            views: info.view_count,
+            thumbnail: info.thumbnail
+          },
+          meta: {
+            endpoint: "/info",
+            timestamp: Date.now(),
+            version: "2.1.0"
+          }
+        });
+      } catch (parseErr) {
+        res.status(500).json({
+          success: false,
+          error: 'Lỗi parse thông tin video'
+        });
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * Endpoint 4: Kiểm tra trạng thái yt-dlp
+ */
+app.get("/download/status", async (req, res) => {
+  try {
+    const version = await checkYtDlp();
+    
+    // Đếm file trong thư mục downloads
+    let files = [];
+    try {
+      files = fs.readdirSync(DOWNLOAD_DIR);
+    } catch (err) {}
+
+    res.json({
+      success: true,
+      data: {
+        yt_dlp_version: version,
+        download_dir: DOWNLOAD_DIR,
+        files_count: files.length,
+        files: files.slice(0, 10)
+      },
+      meta: {
+        endpoint: "/download/status",
+        timestamp: Date.now(),
+        version: "2.1.0"
+      }
+    });
+
+  } catch (err) {
+    res.json({
+      success: false,
+      error: 'yt-dlp chưa được cài đặt',
+      solution: 'Vui lòng cài đặt: pip install yt-dlp'
     });
   }
 });
@@ -295,12 +607,19 @@ app.get("/boy", (req, res) => handleImageEndpoint(req, res, "boy", KEYWORDS.boy)
 app.get("/cosplay", (req, res) => handleImageEndpoint(req, res, "cosplay", KEYWORDS.cosplay));
 app.get("/anime", (req, res) => handleImageEndpoint(req, res, "anime", KEYWORDS.anime));
 
-// Endpoint GURA mới
+// Endpoint GURA
 app.get("/gura", (req, res) => handleGura(req, res, cache, searchPinterestImages));
 
 // ==================== UTILITY ENDPOINTS ====================
 
 app.get("/stats", (req, res) => {
+  // Đếm file downloads
+  let downloadCount = 0;
+  try {
+    const files = fs.readdirSync(DOWNLOAD_DIR);
+    downloadCount = files.length;
+  } catch (err) {}
+
   res.json({
     success: true,
     data: {
@@ -312,15 +631,16 @@ app.get("/stats", (req, res) => {
         cosplay: cache.cosplay.images.length,
         anime: cache.anime.images.length,
         gura: cache.gura?.images.length || 0,
-        vdgai: cache.vdgai.videos.length
+        vdgai: cache.vdgai.videos.length,
+        downloads: downloadCount
       },
       uptime: process.uptime(),
-      version: "1.2.8",
-      environment: isVercel ? "vercel" : "local"
+      version: "2.1.0",
+      environment: isRender ? "render" : "local"
     },
     meta: { 
       timestamp: Date.now(), 
-      version: "1.2.8" 
+      version: "2.1.0" 
     }
   });
 });
@@ -329,9 +649,13 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "1.2.8",
-    environment: isVercel ? "vercel" : "local",
-    endpoints: ["/girl", "/boy", "/cosplay", "/anime", "/gura", "/vdgai", "/stats", "/health"]
+    version: "2.1.0",
+    environment: isRender ? "render" : "local",
+    endpoints: [
+      "/girl", "/boy", "/cosplay", "/anime", "/gura", 
+      "/vdgai", "/download", "/download/file", "/info", "/download/status",
+      "/stats", "/health"
+    ]
   });
 });
 
@@ -339,7 +663,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║           TMK API v1.2.8                 ║
+║           TMK API v2.1.0                 ║
 ║        Professional Image & Video        ║
 ╠══════════════════════════════════════════╣
 ║  📸 Image Endpoints:                      ║
@@ -352,12 +676,14 @@ app.listen(PORT, () => {
 ║  🎬 Video Endpoints:                      ║
 ║  └─ /vdgai    → Video collection         ║
 ╠══════════════════════════════════════════╣
-║  📊 Statistics:                           ║
-║  ├─ /stats    → API statistics           ║
-║  └─ /health   → Health check             ║
+║  📥 Download Endpoints:                   ║
+║  ├─ /download?url=...  → Get direct link ║
+║  ├─ /download/file?url=... → Download    ║
+║  ├─ /info?url=...      → Video info      ║
+║  └─ /download/status   → yt-dlp status   ║
 ╠══════════════════════════════════════════╣
 ║  ⚡ Status: ✅ Running                     ║
-║  🌐 Environment: ${isVercel ? 'Vercel' : 'Local'}                   ║
+║  🌐 Environment: ${isRender ? 'Render' : 'Local'}                   ║
 ╚══════════════════════════════════════════╝
   `);
 });

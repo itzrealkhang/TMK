@@ -1,22 +1,16 @@
 {
-  "name": "tmk-api-enterprise",
-  "version": "2.0.0",
-  "description": "Enterprise-grade image API with Pinterest integration",
+  "name": "tmk-api",
+  "version": "2.1.0",
+  "description": "TMK API - Images, Videos & YouTube Downloader",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "pm2": "pm2 start index.js --name tmk-api"
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "axios": "^1.6.2",
-    "cheerio": "^1.0.0-rc.12"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "axios": "^1.6.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   }
 }
