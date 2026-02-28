@@ -160,7 +160,7 @@
 
     .endpoints {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 24px;
       margin-bottom: 40px;
     }
@@ -464,7 +464,7 @@
 
     .download-result {
       margin-top: 24px;
-      padding: 20px;
+      padding: 24px;
       background: rgba(79, 70, 229, 0.1);
       border-radius: 20px;
       border: 1px solid #4f46e5;
@@ -478,6 +478,22 @@
 
     .download-result a:hover {
       text-decoration: underline;
+    }
+
+    .video-info {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .video-info h4 {
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .video-info p {
+      color: #94a3b8;
+      font-size: 14px;
     }
 
     .footer {
@@ -545,7 +561,7 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v2.1.0</span>
+          <span class="version">v2.2.0</span>
           <span><i class="far fa-clock"></i> 30min cache</span>
           <span><i class="fas fa-bolt"></i> 99.9% uptime</span>
         </div>
@@ -553,8 +569,8 @@
     </header>
 
     <section class="hero">
-      <h2>Professional Image & Video API with Downloader</h2>
-      <p>High-quality content from Pinterest, video collection, and YouTube/TikTok downloader powered by yt-dlp.</p>
+      <h2>Professional Image & Video Service</h2>
+      <p>High-quality images from Pinterest, video collection, and smart downloader - just paste any video URL to get info + download link.</p>
       
       <div class="stats">
         <div class="stat-item">
@@ -673,7 +689,7 @@
     </div>
 
     <div class="section-title">
-      <i class="fas fa-download"></i> Download Endpoints
+      <i class="fas fa-download"></i> Download Endpoint
     </div>
     <div class="endpoints">
       <div class="endpoint-card">
@@ -681,34 +697,10 @@
           <span class="endpoint-path">/download</span>
           <span class="method download">GET</span>
         </div>
-        <div class="endpoint-desc">Get direct download link (YouTube, TikTok, etc.)</div>
+        <div class="endpoint-desc">Get video info + download link (YouTube, TikTok, etc.)</div>
         <div class="code-block"><span class="code-line">GET /download?url=VIDEO_URL</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('download?url=')">📋 Copy</button>
-        </div>
-      </div>
-
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="endpoint-path">/download/file</span>
-          <span class="method download">GET</span>
-        </div>
-        <div class="endpoint-desc">Download video directly to your device</div>
-        <div class="code-block"><span class="code-line">GET /download/file?url=VIDEO_URL</span></div>
-        <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('download/file?url=')">📋 Copy</button>
-        </div>
-      </div>
-
-      <div class="endpoint-card">
-        <div class="endpoint-header">
-          <span class="endpoint-path">/info</span>
-          <span class="method download">GET</span>
-        </div>
-        <div class="endpoint-desc">Get video information (title, duration, uploader)</div>
-        <div class="code-block"><span class="code-line">GET /info?url=VIDEO_URL</span></div>
-        <div class="actions">
-          <button class="btn btn-primary" onclick="copyUrl('info?url=')">📋 Copy</button>
           <button class="btn btn-outline" onclick="testEndpoint('download/status')">🔍 Status</button>
         </div>
       </div>
@@ -751,21 +743,17 @@
         <span>Keyword: <strong id="currentKeyword">girl</strong></span>
       </div>
 
-      <!-- Download Demo (ẩn mặc định) -->
+      <!-- Download Demo -->
       <div id="downloadDemo" style="display: none;">
         <div class="download-form">
           <input type="text" class="download-input" id="downloadUrl" placeholder="Paste YouTube/TikTok URL here...">
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-download" onclick="getDownloadLink()">
-              <i class="fas fa-link"></i> Get Link
-            </button>
-            <button class="btn btn-download" onclick="downloadVideo()">
-              <i class="fas fa-download"></i> Download
-            </button>
-          </div>
+          <button class="btn btn-download" onclick="processDownload()">
+            <i class="fas fa-download"></i> Get Video
+          </button>
         </div>
         <div class="download-result" id="downloadResult" style="display: none;">
-          <p><strong>Download Link:</strong></p>
+          <div class="video-info" id="videoInfo"></div>
+          <p><strong>Download Link (valid for 30 minutes):</strong></p>
           <a href="#" id="downloadLink" target="_blank"></a>
         </div>
       </div>
@@ -809,7 +797,6 @@
       document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector(`.demo-tab[data-type="${type}"]`).classList.add('active');
       
-      // Ẩn download demo, hiện preview bình thường
       document.getElementById('downloadDemo').style.display = 'none';
       document.getElementById('previewFrame').style.display = 'flex';
       document.getElementById('previewInfo').style.display = 'block';
@@ -822,7 +809,6 @@
       document.querySelectorAll('.demo-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelector('.demo-tab.download').classList.add('active');
       
-      // Ẩn preview, hiện download demo
       document.getElementById('previewFrame').style.display = 'none';
       document.getElementById('previewInfo').style.display = 'none';
       document.getElementById('downloadDemo').style.display = 'block';
@@ -888,37 +874,47 @@
       }
     }
 
-    async function getDownloadLink() {
+    async function processDownload() {
       const url = document.getElementById('downloadUrl').value;
       if (!url) {
         alert('Vui lòng nhập URL video');
         return;
       }
 
+      document.getElementById('downloadResult').style.display = 'none';
+      document.getElementById('loading').style.display = 'flex';
+      
       try {
         const res = await fetch(`${baseUrl}/download?url=${encodeURIComponent(url)}`);
         const data = await res.json();
         
+        document.getElementById('loading').style.display = 'none';
+        
         if (data.success) {
+          const video = data.data.video;
+          const download = data.data.download;
+          
+          // Format duration
+          const minutes = Math.floor(video.duration / 60);
+          const seconds = video.duration % 60;
+          const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          
+          document.getElementById('videoInfo').innerHTML = `
+            <h4>${video.title}</h4>
+            <p>📤 ${video.uploader} · 👁️ ${video.views?.toLocaleString()} views · ⏱️ ${duration}</p>
+            <p>📦 ${(download.size / 1024 / 1024).toFixed(2)} MB · ⏳ Expires in 30 minutes</p>
+          `;
+          
+          document.getElementById('downloadLink').href = download.url;
+          document.getElementById('downloadLink').textContent = download.url;
           document.getElementById('downloadResult').style.display = 'block';
-          document.getElementById('downloadLink').href = data.data.download_url;
-          document.getElementById('downloadLink').textContent = data.data.download_url;
         } else {
           alert('Lỗi: ' + data.error);
         }
       } catch (err) {
+        document.getElementById('loading').style.display = 'none';
         alert('Lỗi kết nối: ' + err.message);
       }
-    }
-
-    async function downloadVideo() {
-      const url = document.getElementById('downloadUrl').value;
-      if (!url) {
-        alert('Vui lòng nhập URL video');
-        return;
-      }
-      
-      window.open(`${baseUrl}/download/file?url=${encodeURIComponent(url)}`, '_blank');
     }
 
     // Request counter
