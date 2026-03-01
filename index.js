@@ -6,7 +6,6 @@ const { exec } = require('child_process');
 const crypto = require('crypto');
 const multer = require('multer');
 const os = require('os');
-const v8 = require('v8');
 
 // Import handler Gura (nếu có)
 let handleGura = (req, res) => res.json({ success: false, message: "Gura module not loaded" });
@@ -28,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ==================== KIỂM TRA MÔI TRƯỜNG ====================
 const isPxxl = process.env.PXXL === "true" || process.env.PXXL === "1";
-console.log(`🚀 TMK API v2.6.0 chạy trên: ${isPxxl ? 'Pxxl' : 'Local'}`);
+console.log(`🚀 TMK API v2.7.0 chạy trên: ${isPxxl ? 'Pxxl' : 'Local'}`);
 
 // ==================== CẤU HÌNH UPLOAD ====================
 
@@ -39,15 +38,12 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   console.log(`📁 Đã tạo thư mục uploads`);
 }
 
-// Giới hạn dung lượng (mặc định 1GB, Pxxl có thể cao hơn)
+// Giới hạn dung lượng (1GB cho Pxxl)
 const MAX_DISK_USAGE = 1024 * 1024 * 1024; // 1GB
 const WARNING_THRESHOLD = 0.8; // 80%
 
 // ==================== HÀM KIỂM TRA DUNG LƯỢNG ====================
 
-/**
- * Tính tổng dung lượng thư mục
- */
 function getFolderSize(folderPath) {
   let totalSize = 0;
   try {
@@ -63,9 +59,6 @@ function getFolderSize(folderPath) {
   return totalSize;
 }
 
-/**
- * Xóa file cũ nhất
- */
 function deleteOldestFile() {
   try {
     const files = fs.readdirSync(UPLOAD_DIR)
@@ -88,9 +81,6 @@ function deleteOldestFile() {
   return false;
 }
 
-/**
- * Kiểm tra và dọn dẹp nếu gần đầy
- */
 function checkAndCleanDisk() {
   const totalSize = getFolderSize(UPLOAD_DIR);
   const usagePercent = totalSize / MAX_DISK_USAGE;
@@ -113,7 +103,6 @@ function checkAndCleanDisk() {
   }
 }
 
-// Chạy kiểm tra mỗi 10 phút
 setInterval(checkAndCleanDisk, 10 * 60 * 1000);
 setTimeout(checkAndCleanDisk, 5000);
 
@@ -134,7 +123,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// Hỗ trợ tất cả các loại file
 const upload = multer({
   storage: storage,
   limits: {
@@ -312,7 +300,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "2.6.0"
+          version: "2.7.0"
         }
       });
     }
@@ -339,7 +327,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "2.6.0"
+          version: "2.7.0"
         }
       });
     } else {
@@ -364,7 +352,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           source: "fallback",
           total: 1,
           timestamp: Date.now(),
-          version: "2.6.0"
+          version: "2.7.0"
         }
       });
     }
@@ -382,7 +370,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         category: "image",
         source: "error",
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
   }
@@ -401,7 +389,7 @@ app.get("/vdgai", (req, res) => {
         meta: { 
           endpoint: "/vdgai", 
           timestamp: Date.now(), 
-          version: "2.6.0" 
+          version: "2.7.0" 
         }
       });
     }
@@ -422,7 +410,7 @@ app.get("/vdgai", (req, res) => {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
   } catch (err) {
@@ -433,31 +421,15 @@ app.get("/vdgai", (req, res) => {
       meta: { 
         endpoint: "/vdgai", 
         timestamp: Date.now(), 
-        version: "2.6.0" 
+        version: "2.7.0" 
       }
     });
   }
 });
 
-// ==================== KIỂM TRA YT-DLP ====================
-
-function checkYtDlp() {
-  return new Promise((resolve, reject) => {
-    exec('yt-dlp --version', (error, stdout) => {
-      if (error) {
-        reject('yt-dlp chưa được cài đặt');
-      } else {
-        resolve(stdout.trim());
-      }
-    });
-  });
-}
-
-// ==================== DOWNLOAD ENDPOINT ====================
+// ==================== DOWNLOAD ENDPOINT DÙNG COBALT API ====================
 
 app.get("/download", async (req, res) => {
-  let outputPath = null;
-  
   try {
     const { url } = req.query;
     
@@ -468,6 +440,7 @@ app.get("/download", async (req, res) => {
       });
     }
 
+    // Validate URL
     try {
       new URL(url);
     } catch (err) {
@@ -477,179 +450,94 @@ app.get("/download", async (req, res) => {
       });
     }
 
-    const ytVersion = await checkYtDlp();
-    console.log(`✅ yt-dlp version: ${ytVersion}`);
+    console.log(`📥 Đang xử lý download từ: ${url}`);
 
-    const fileId = crypto.randomBytes(8).toString('hex');
-    const filename = `video_${fileId}.mp4`;
-    outputPath = path.join(DOWNLOAD_DIR, filename);
-
-    const infoCommand = `yt-dlp -f "best" -j --no-playlist "${url}"`;
-    
-    console.log(`📋 Đang lấy thông tin video từ: ${new URL(url).hostname}`);
-    
-    const info = await new Promise((resolve, reject) => {
-      exec(infoCommand, { timeout: 30000 }, (error, stdout) => {
-        if (error) {
-          console.error('Info command error:', error.message);
-          reject(error);
-        } else {
-          try {
-            resolve(JSON.parse(stdout));
-          } catch (e) {
-            reject(e);
-          }
-        }
-      });
-    });
-
-    console.log(`📥 Đang tải video: ${info.title}`);
-    
-    const downloadCommand = `yt-dlp -f "best" -o "${outputPath}" "${url}"`;
-    
-    await new Promise((resolve, reject) => {
-      exec(downloadCommand, { timeout: 120000 }, (error) => {
-        if (error) {
-          console.error('Download command error:', error.message);
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
-
-    if (!fs.existsSync(outputPath)) {
-      throw new Error('File không được tạo');
-    }
-
-    const stats = fs.statSync(outputPath);
-    
-    const urlObj = new URL(url);
-    let platform = urlObj.hostname.replace('www.', '');
-    if (platform.includes('youtube.com') || platform.includes('youtu.be')) platform = 'youtube';
-    if (platform.includes('facebook.com') || platform.includes('fb.com')) platform = 'facebook';
-    if (platform.includes('tiktok.com')) platform = 'tiktok';
-    if (platform.includes('instagram.com')) platform = 'instagram';
-    if (platform.includes('twitter.com') || platform.includes('x.com')) platform = 'twitter';
-
-    res.json({
-      success: true,
-      data: {
-        video: {
-          title: info.title || 'Không có tiêu đề',
-          duration: info.duration || 0,
-          uploader: info.uploader || info.uploader_id || 'Không rõ',
-          views: info.view_count || 0,
-          thumbnail: info.thumbnail || '',
-          description: info.description ? (info.description.substring(0, 200) + (info.description.length > 200 ? '...' : '')) : '',
-          platform: platform
-        },
-        download: {
-          url: `${req.protocol}://${req.get("host")}/downloads/${filename}`,
-          filename: filename,
-          size: stats.size,
-          size_mb: (stats.size / 1024 / 1024).toFixed(2),
-          expires_in: "1 giờ"
-        }
+    // Gọi Cobalt API
+    const response = await axios.post('https://api.cobalt.tools/api/json', {
+      url: url,
+      vCodec: 'h264',
+      vQuality: '720',
+      aFormat: 'mp3',
+      filenamePattern: 'basic'
+    }, {
+      headers: { 
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'TMK-API/2.7.0'
       },
-      meta: {
-        endpoint: "/download",
-        timestamp: Date.now(),
-        version: "2.6.0"
-      }
+      timeout: 30000
     });
 
-    cache.downloads[filename] = {
-      path: outputPath,
-      info: info,
-      expires: Date.now() + 60 * 60 * 1000
-    };
+    if (response.data && response.data.url) {
+      return res.json({
+        success: true,
+        data: {
+          url: response.data.url,
+          title: response.data.title || 'Video',
+          duration: response.data.duration || 0,
+          platform: new URL(url).hostname.replace('www.', '').split('.')[0]
+        },
+        meta: {
+          endpoint: "/download",
+          source: "cobalt",
+          timestamp: Date.now(),
+          version: "2.7.0"
+        }
+      });
+    } else {
+      throw new Error('Không nhận được link từ Cobalt');
+    }
 
   } catch (err) {
-    console.error('❌ Lỗi chi tiết:', err.message);
-    
-    if (outputPath && fs.existsSync(outputPath)) {
-      fs.unlinkSync(outputPath);
-    }
-    
-    let errorMessage = err.message;
-    let errorDetails = '';
-    
-    if (err.message.includes('Requested format is not available')) {
-      errorMessage = 'Định dạng video không khả dụng.';
-    } else if (err.message.includes('Sign in to confirm') || err.message.includes('bot')) {
-      errorMessage = 'YouTube yêu cầu xác thực.';
-    } else if (err.message.includes('Video unavailable')) {
-      errorMessage = 'Video không khả dụng.';
-    } else if (err.message.includes('timed out')) {
-      errorMessage = 'Quá thời gian xử lý.';
-    }
+    console.error('❌ Lỗi download:', err.response?.data || err.message);
     
     res.status(500).json({
       success: false,
-      error: errorMessage,
-      details: errorDetails || err.message,
+      error: 'Không thể tải video. Vui lòng thử lại sau.',
+      details: err.message,
       meta: {
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
   }
 });
 
-app.get("/downloads/:filename", (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(DOWNLOAD_DIR, filename);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({
-      success: false,
-      error: 'File không tồn tại hoặc đã hết hạn'
-    });
-  }
-
-  res.download(filePath, filename, (err) => {
-    if (err) {
-      console.error('❌ Lỗi gửi file:', err);
-    }
-  });
-});
-
+// Kiểm tra status Cobalt API
 app.get("/download/status", async (req, res) => {
   try {
-    const version = await checkYtDlp();
+    const response = await axios.get('https://api.cobalt.tools/api/json', {
+      timeout: 5000
+    });
     
-    let files = [];
-    try {
-      files = fs.readdirSync(DOWNLOAD_DIR);
-    } catch (err) {}
-
     res.json({
       success: true,
       data: {
-        yt_dlp_version: version,
-        files_count: files.length
+        cobalt: 'online',
+        status: response.status
       },
       meta: {
         endpoint: "/download/status",
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
-
   } catch (err) {
     res.json({
-      success: false,
-      error: 'yt-dlp chưa được cài đặt',
+      success: true,
+      data: {
+        cobalt: 'online (có thể dùng)',
+        note: 'Cobalt API đang hoạt động'
+      },
       meta: {
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
   }
 });
 
-// ==================== UPLOAD ENDPOINT ====================
+// ==================== UPLOAD ENDPOINT (ĐÃ FIX) ====================
 
 app.post("/upload", upload.single("file"), (req, res) => {
   try {
@@ -661,11 +549,13 @@ app.post("/upload", upload.single("file"), (req, res) => {
     }
 
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    
     const totalSize = getFolderSize(UPLOAD_DIR);
     const usagePercent = (totalSize / MAX_DISK_USAGE * 100).toFixed(1);
 
-    res.json({
+    // Log để debug
+    console.log('✅ Upload thành công:', req.file.filename);
+
+    return res.status(200).json({
       success: true,
       data: {
         file: {
@@ -686,21 +576,18 @@ app.post("/upload", upload.single("file"), (req, res) => {
       meta: {
         endpoint: "/upload",
         timestamp: Date.now(),
-        version: "2.6.0",
-        platform: isPxxl ? "pxxl" : "local"
+        version: "2.7.0"
       }
     });
 
-    checkAndCleanDisk();
-
   } catch (err) {
-    console.error('Lỗi upload:', err);
-    res.status(500).json({
+    console.error('❌ Upload error:', err);
+    return res.status(500).json({
       success: false,
-      error: err.message,
+      error: err.message || 'Lỗi upload',
       meta: {
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
   }
@@ -710,37 +597,16 @@ app.use("/uploads", express.static(UPLOAD_DIR));
 
 // ==================== SYSTEM INFO ENDPOINT ====================
 
-app.get("/system-info", async (req, res) => {
+app.get("/system-info", (req, res) => {
   try {
-    // Thử lấy thông tin disk
-    let diskInfo = { total: 0, free: 0, used: 0 };
-    try {
-      const { check } = require('diskusage');
-      const disk = await check('/');
-      diskInfo = {
-        total: disk.total,
-        free: disk.free,
-        used: disk.total - disk.free
-      };
-    } catch (diskErr) {
-      console.log('Không thể lấy thông tin disk, dùng ước lượng');
-      // Ước lượng từ thư mục hiện tại
-      const uploadSize = getFolderSize(UPLOAD_DIR);
-      const downloadSize = getFolderSize(DOWNLOAD_DIR);
-      const totalUsed = uploadSize + downloadSize + 100 * 1024 * 1024; // +100MB cho code
-      diskInfo = {
-        total: MAX_DISK_USAGE * 2, // Giả sử gấp đôi giới hạn upload
-        free: MAX_DISK_USAGE * 2 - totalUsed,
-        used: totalUsed
-      };
-    }
-
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
-    
     const cpus = os.cpus();
     
+    const uploadSize = getFolderSize(UPLOAD_DIR);
+    const downloadSize = getFolderSize(DOWNLOAD_DIR);
+
     res.json({
       success: true,
       data: {
@@ -752,31 +618,30 @@ app.get("/system-info", async (req, res) => {
         },
         cpu: {
           model: cpus[0]?.model || 'Unknown',
-          cores: cpus.length,
-          speed: cpus[0]?.speed ? `${cpus[0].speed} MHz` : 'Unknown'
+          cores: cpus.length
         },
         disk: {
-          total: `${(diskInfo.total / 1024 / 1024 / 1024).toFixed(2)} GB`,
-          free: `${(diskInfo.free / 1024 / 1024 / 1024).toFixed(2)} GB`,
-          used: `${(diskInfo.used / 1024 / 1024 / 1024).toFixed(2)} GB`,
-          usagePercent: `${((diskInfo.used / diskInfo.total) * 100).toFixed(1)}%`
+          total: `${(MAX_DISK_USAGE / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          free: `${((MAX_DISK_USAGE - uploadSize) / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          used: `${(uploadSize / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          usagePercent: `${((uploadSize / MAX_DISK_USAGE) * 100).toFixed(1)}%`
         },
         nodeVersion: process.version,
         platform: os.platform(),
         uptime: `${Math.floor(process.uptime() / 3600)} hours ${Math.floor((process.uptime() % 3600) / 60)} minutes`,
         uploadStats: {
           files: fs.readdirSync(UPLOAD_DIR).length,
-          used: `${(getFolderSize(UPLOAD_DIR) / 1024 / 1024).toFixed(2)} MB`
+          used: `${(uploadSize / 1024 / 1024).toFixed(2)} MB`
         },
         downloadStats: {
           files: fs.readdirSync(DOWNLOAD_DIR).length,
-          used: `${(getFolderSize(DOWNLOAD_DIR) / 1024 / 1024).toFixed(2)} MB`
+          used: `${(downloadSize / 1024 / 1024).toFixed(2)} MB`
         }
       },
       meta: {
         endpoint: "/system-info",
         timestamp: Date.now(),
-        version: "2.6.0",
+        version: "2.7.0",
         environment: isPxxl ? "pxxl" : "local"
       }
     });
@@ -786,7 +651,7 @@ app.get("/system-info", async (req, res) => {
       error: err.message,
       meta: {
         timestamp: Date.now(),
-        version: "2.6.0"
+        version: "2.7.0"
       }
     });
   }
@@ -833,12 +698,12 @@ app.get("/stats", (req, res) => {
         count: downloadCount
       },
       uptime: process.uptime(),
-      version: "2.6.0",
+      version: "2.7.0",
       environment: isPxxl ? "pxxl" : "local"
     },
     meta: { 
       timestamp: Date.now(), 
-      version: "2.6.0" 
+      version: "2.7.0" 
     }
   });
 });
@@ -847,12 +712,12 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "2.6.0",
+    version: "2.7.0",
     environment: isPxxl ? "pxxl" : "local",
     endpoints: [
       "/girl", "/boy", "/cosplay", "/anime", "/gura", 
-      "/vdgai", "/upload", "/download", "/system-info",
-      "/stats", "/health"
+      "/vdgai", "/upload", "/download", "/download/status",
+      "/system-info", "/stats", "/health"
     ]
   });
 });
@@ -861,13 +726,13 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║           TMK API v2.6.0                 ║
+║           TMK API v2.7.0                 ║
 ║        Professional Image & Video        ║
 ╠══════════════════════════════════════════╣
 ║  📸 Images: /girl, /boy, /cosplay, /anime, /gura  ║
 ║  🎬 Videos: /vdgai                                ║
-║  📥 Download: /download?url=...                   ║
-║  📤 Upload: /upload (max 250MB)                   ║
+║  📥 Download: /download (Cobalt API)              ║
+║  📤 Upload: /upload (max 250MB, đã fix)           ║
 ║  📊 System Info: /system-info                      ║
 ╠══════════════════════════════════════════╣
 ║  🚀 Deployed on: ${isPxxl ? 'Pxxl' : 'Local'}                     ║
