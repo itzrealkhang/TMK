@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.vscode
+.idea
+*.log
+downloads/*
+uploads/*
+!downloads/.gitkeep
+!uploads/.gitkeep
