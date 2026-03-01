@@ -203,8 +203,8 @@ let cache = {
 // ==================== KEYWORDS ====================
 
 const KEYWORDS = {
-  girl: ["girl", "beautiful girl", "cute girl", "asian girl", "model girl", "pretty woman"],
-  boy: ["boy", "handsome boy", "cute boy", "asian boy", "model boy", "handsome man"],
+  girl: ["gái xinh", "gái", "gái cute"],
+  boy: ["boy", "trai đẹp", "trai 6 múi"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay", "cosplay vietnam", "cosplay asian"],
   anime: ["anime", "anime girl", "anime boy", "cute anime", "anime art", "manga", "waifu"]
 };
