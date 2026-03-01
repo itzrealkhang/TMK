@@ -609,7 +609,7 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v2.5.0</span>
+          <span class="version">v2.6.0</span>
           <span><i class="far fa-clock"></i> 30min cache</span>
           <span><i class="fas fa-bolt"></i> 99.9% uptime</span>
         </div>
@@ -766,7 +766,7 @@
           <span class="keyword-tag">250MB</span>
         </div>
         <div class="code-block">
-          <span class="code-line">curl -X POST -F "file=@video.mp4" https://tmk-qzph.onrender.com/upload</span>
+          <span class="code-line">curl -X POST -F "file=@video.mp4" https://tmk.pxxl.click/upload</span>
         </div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('upload')">📋 Copy URL</button>
@@ -823,7 +823,7 @@
         </div>
         <div class="download-result" id="downloadResult" style="display: none;">
           <div class="video-info" id="videoInfo"></div>
-          <p><strong>Download Link (valid for 30 minutes):</strong></p>
+          <p><strong>Download Link (valid for 1 hour):</strong></p>
           <a href="#" id="downloadLink" target="_blank"></a>
         </div>
       </div>
@@ -852,6 +852,7 @@
         <a onclick="copyUrl('download?url=')">download</a>
         <a onclick="copyUrl('upload')">upload</a>
         <a href="/stats">stats</a>
+        <a href="/health">health</a>
       </div>
       <div>
         <i class="far fa-heart" style="color: #ec4899;"></i>
@@ -1004,7 +1005,7 @@
           document.getElementById('videoInfo').innerHTML = `
             <h4>${video.title}</h4>
             <p>📤 ${video.uploader} · 👁️ ${video.views?.toLocaleString()} views · ⏱️ ${duration}</p>
-            <p>📦 ${download.size_mb} MB · ⏳ Expires in 30 minutes</p>
+            <p>📦 ${download.size_mb} MB · ⏳ Expires in 1 hour</p>
           `;
           
           document.getElementById('downloadLink').href = download.url;

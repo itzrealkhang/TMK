@@ -5,6 +5,8 @@ const fs = require("fs");
 const { exec } = require('child_process');
 const crypto = require('crypto');
 const multer = require('multer');
+const os = require('os');
+const v8 = require('v8');
 
 // Import handler Gura (nếu có)
 let handleGura = (req, res) => res.json({ success: false, message: "Gura module not loaded" });
@@ -25,8 +27,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ==================== KIỂM TRA MÔI TRƯỜNG ====================
-const isRender = process.env.RENDER === "true" || process.env.RENDER === "1";
-console.log(`🚀 TMK API v2.5.0 chạy trên: ${isRender ? 'Render' : 'Local'}`);
+const isPxxl = process.env.PXXL === "true" || process.env.PXXL === "1";
+console.log(`🚀 TMK API v2.6.0 chạy trên: ${isPxxl ? 'Pxxl' : 'Local'}`);
 
 // ==================== CẤU HÌNH UPLOAD ====================
 
@@ -37,8 +39,8 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   console.log(`📁 Đã tạo thư mục uploads`);
 }
 
-// Giới hạn dung lượng
-const MAX_DISK_USAGE = 500 * 1024 * 1024; // 500MB
+// Giới hạn dung lượng (mặc định 1GB, Pxxl có thể cao hơn)
+const MAX_DISK_USAGE = 1024 * 1024 * 1024; // 1GB
 const WARNING_THRESHOLD = 0.8; // 80%
 
 // ==================== HÀM KIỂM TRA DUNG LƯỢNG ====================
@@ -93,7 +95,7 @@ function checkAndCleanDisk() {
   const totalSize = getFolderSize(UPLOAD_DIR);
   const usagePercent = totalSize / MAX_DISK_USAGE;
   
-  console.log(`📊 Uploads: ${(totalSize / 1024 / 1024).toFixed(2)}MB / 500MB (${Math.round(usagePercent * 100)}%)`);
+  console.log(`📊 Uploads: ${(totalSize / 1024 / 1024).toFixed(2)}MB / 1GB (${Math.round(usagePercent * 100)}%)`);
   
   if (usagePercent >= WARNING_THRESHOLD) {
     console.log(`⚠️ Dung lượng gần đầy, tự động dọn dẹp...`);
@@ -121,7 +123,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const totalSize = getFolderSize(UPLOAD_DIR);
     if (totalSize >= MAX_DISK_USAGE) {
-      return cb(new Error('Dung lượng upload đã đầy (500MB)'));
+      return cb(new Error('Dung lượng upload đã đầy (1GB)'));
     }
     cb(null, UPLOAD_DIR);
   },
@@ -139,6 +141,35 @@ const upload = multer({
     fileSize: 250 * 1024 * 1024 // 250MB
   }
 });
+
+// ==================== CẤU HÌNH DOWNLOAD ====================
+
+const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
+if (!fs.existsSync(DOWNLOAD_DIR)) {
+  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+  console.log(`📁 Đã tạo thư mục downloads`);
+}
+
+// Dọn dẹp file download cũ
+setInterval(() => {
+  if (!fs.existsSync(DOWNLOAD_DIR)) return;
+  
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  
+  fs.readdir(DOWNLOAD_DIR, (err, files) => {
+    if (err) return;
+    files.forEach(file => {
+      const filePath = path.join(DOWNLOAD_DIR, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) return;
+        if (now - stats.mtimeMs > oneHour) {
+          fs.unlink(filePath, () => {});
+        }
+      });
+    });
+  });
+}, 30 * 60 * 1000);
 
 // ==================== ĐỌC FILE VIDEO ====================
 
@@ -161,6 +192,7 @@ let cache = {
   anime: { images: [], lastFetch: 0 },
   gura: { images: [], lastFetch: 0 },
   vdgai: { videos: videoUrls, lastFetch: Date.now() },
+  downloads: {},
   ttl: 30 * 60 * 1000, // 30 phút
   stats: {
     requests: 0,
@@ -171,8 +203,8 @@ let cache = {
 // ==================== KEYWORDS ====================
 
 const KEYWORDS = {
-  girl: ["gái xinh", "gái cute"],
-  boy: ["bot", "trai", "trai đẹp", "trai 6 múi"],
+  girl: ["girl", "beautiful girl", "cute girl", "asian girl", "model girl", "pretty woman"],
+  boy: ["boy", "handsome boy", "cute boy", "asian boy", "model boy", "handsome man"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay", "cosplay vietnam", "cosplay asian"],
   anime: ["anime", "anime girl", "anime boy", "cute anime", "anime art", "manga", "waifu"]
 };
@@ -280,7 +312,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: true,
           total: cacheData.images.length,
           timestamp: Date.now(),
-          version: "2.5.0"
+          version: "2.6.0"
         }
       });
     }
@@ -307,7 +339,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           cached: false,
           total: images.length,
           timestamp: Date.now(),
-          version: "2.5.0"
+          version: "2.6.0"
         }
       });
     } else {
@@ -332,7 +364,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
           source: "fallback",
           total: 1,
           timestamp: Date.now(),
-          version: "2.5.0"
+          version: "2.6.0"
         }
       });
     }
@@ -350,7 +382,7 @@ async function handleImageEndpoint(req, res, type, keywordList) {
         category: "image",
         source: "error",
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
   }
@@ -369,7 +401,7 @@ app.get("/vdgai", (req, res) => {
         meta: { 
           endpoint: "/vdgai", 
           timestamp: Date.now(), 
-          version: "2.5.0" 
+          version: "2.6.0" 
         }
       });
     }
@@ -390,7 +422,7 @@ app.get("/vdgai", (req, res) => {
         source: "json",
         total: videoCache.videos.length,
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
   } catch (err) {
@@ -401,7 +433,7 @@ app.get("/vdgai", (req, res) => {
       meta: { 
         endpoint: "/vdgai", 
         timestamp: Date.now(), 
-        version: "2.5.0" 
+        version: "2.6.0" 
       }
     });
   }
@@ -422,12 +454,6 @@ function checkYtDlp() {
 }
 
 // ==================== DOWNLOAD ENDPOINT ====================
-
-const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
-if (!fs.existsSync(DOWNLOAD_DIR)) {
-  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
-  console.log(`📁 Đã tạo thư mục downloads`);
-}
 
 app.get("/download", async (req, res) => {
   let outputPath = null;
@@ -523,15 +549,21 @@ app.get("/download", async (req, res) => {
           filename: filename,
           size: stats.size,
           size_mb: (stats.size / 1024 / 1024).toFixed(2),
-          expires_in: "30 phút"
+          expires_in: "1 giờ"
         }
       },
       meta: {
         endpoint: "/download",
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
+
+    cache.downloads[filename] = {
+      path: outputPath,
+      info: info,
+      expires: Date.now() + 60 * 60 * 1000
+    };
 
   } catch (err) {
     console.error('❌ Lỗi chi tiết:', err.message);
@@ -559,7 +591,7 @@ app.get("/download", async (req, res) => {
       details: errorDetails || err.message,
       meta: {
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
   }
@@ -601,7 +633,7 @@ app.get("/download/status", async (req, res) => {
       meta: {
         endpoint: "/download/status",
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
 
@@ -611,17 +643,14 @@ app.get("/download/status", async (req, res) => {
       error: 'yt-dlp chưa được cài đặt',
       meta: {
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
   }
 });
 
-// ==================== UPLOAD ENDPOINT (DUY NHẤT) ====================
+// ==================== UPLOAD ENDPOINT ====================
 
-/**
- * Upload file - Hỗ trợ tất cả các loại file, giới hạn 250MB
- */
 app.post("/upload", upload.single("file"), (req, res) => {
   try {
     if (!req.file) {
@@ -633,7 +662,6 @@ app.post("/upload", upload.single("file"), (req, res) => {
 
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
     
-    // Tính dung lượng
     const totalSize = getFolderSize(UPLOAD_DIR);
     const usagePercent = (totalSize / MAX_DISK_USAGE * 100).toFixed(1);
 
@@ -658,11 +686,11 @@ app.post("/upload", upload.single("file"), (req, res) => {
       meta: {
         endpoint: "/upload",
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0",
+        platform: isPxxl ? "pxxl" : "local"
       }
     });
 
-    // Kiểm tra và dọn dẹp nếu cần
     checkAndCleanDisk();
 
   } catch (err) {
@@ -672,16 +700,97 @@ app.post("/upload", upload.single("file"), (req, res) => {
       error: err.message,
       meta: {
         timestamp: Date.now(),
-        version: "2.5.0"
+        version: "2.6.0"
       }
     });
   }
 });
 
-/**
- * Serve uploaded files
- */
 app.use("/uploads", express.static(UPLOAD_DIR));
+
+// ==================== SYSTEM INFO ENDPOINT ====================
+
+app.get("/system-info", async (req, res) => {
+  try {
+    // Thử lấy thông tin disk
+    let diskInfo = { total: 0, free: 0, used: 0 };
+    try {
+      const { check } = require('diskusage');
+      const disk = await check('/');
+      diskInfo = {
+        total: disk.total,
+        free: disk.free,
+        used: disk.total - disk.free
+      };
+    } catch (diskErr) {
+      console.log('Không thể lấy thông tin disk, dùng ước lượng');
+      // Ước lượng từ thư mục hiện tại
+      const uploadSize = getFolderSize(UPLOAD_DIR);
+      const downloadSize = getFolderSize(DOWNLOAD_DIR);
+      const totalUsed = uploadSize + downloadSize + 100 * 1024 * 1024; // +100MB cho code
+      diskInfo = {
+        total: MAX_DISK_USAGE * 2, // Giả sử gấp đôi giới hạn upload
+        free: MAX_DISK_USAGE * 2 - totalUsed,
+        used: totalUsed
+      };
+    }
+
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    
+    const cpus = os.cpus();
+    
+    res.json({
+      success: true,
+      data: {
+        memory: {
+          total: `${(totalMem / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          free: `${(freeMem / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          used: `${(usedMem / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          usagePercent: `${((usedMem / totalMem) * 100).toFixed(1)}%`
+        },
+        cpu: {
+          model: cpus[0]?.model || 'Unknown',
+          cores: cpus.length,
+          speed: cpus[0]?.speed ? `${cpus[0].speed} MHz` : 'Unknown'
+        },
+        disk: {
+          total: `${(diskInfo.total / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          free: `${(diskInfo.free / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          used: `${(diskInfo.used / 1024 / 1024 / 1024).toFixed(2)} GB`,
+          usagePercent: `${((diskInfo.used / diskInfo.total) * 100).toFixed(1)}%`
+        },
+        nodeVersion: process.version,
+        platform: os.platform(),
+        uptime: `${Math.floor(process.uptime() / 3600)} hours ${Math.floor((process.uptime() % 3600) / 60)} minutes`,
+        uploadStats: {
+          files: fs.readdirSync(UPLOAD_DIR).length,
+          used: `${(getFolderSize(UPLOAD_DIR) / 1024 / 1024).toFixed(2)} MB`
+        },
+        downloadStats: {
+          files: fs.readdirSync(DOWNLOAD_DIR).length,
+          used: `${(getFolderSize(DOWNLOAD_DIR) / 1024 / 1024).toFixed(2)} MB`
+        }
+      },
+      meta: {
+        endpoint: "/system-info",
+        timestamp: Date.now(),
+        version: "2.6.0",
+        environment: isPxxl ? "pxxl" : "local"
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      meta: {
+        timestamp: Date.now(),
+        version: "2.6.0"
+      }
+    });
+  }
+});
 
 // ==================== ENDPOINTS CHÍNH ====================
 
@@ -724,12 +833,12 @@ app.get("/stats", (req, res) => {
         count: downloadCount
       },
       uptime: process.uptime(),
-      version: "2.5.0",
-      environment: isRender ? "render" : "local"
+      version: "2.6.0",
+      environment: isPxxl ? "pxxl" : "local"
     },
     meta: { 
       timestamp: Date.now(), 
-      version: "2.5.0" 
+      version: "2.6.0" 
     }
   });
 });
@@ -738,9 +847,13 @@ app.get("/health", (req, res) => {
   res.json({
     status: "operational",
     timestamp: Date.now(),
-    version: "2.5.0",
-    environment: isRender ? "render" : "local",
-    endpoints: ["/girl", "/boy", "/cosplay", "/anime", "/gura", "/vdgai", "/upload", "/download", "/stats", "/health"]
+    version: "2.6.0",
+    environment: isPxxl ? "pxxl" : "local",
+    endpoints: [
+      "/girl", "/boy", "/cosplay", "/anime", "/gura", 
+      "/vdgai", "/upload", "/download", "/system-info",
+      "/stats", "/health"
+    ]
   });
 });
 
@@ -748,16 +861,16 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║           TMK API v2.5.0                 ║
+║           TMK API v2.6.0                 ║
 ║        Professional Image & Video        ║
 ╠══════════════════════════════════════════╣
 ║  📸 Images: /girl, /boy, /cosplay, /anime, /gura  ║
 ║  🎬 Videos: /vdgai                                ║
 ║  📥 Download: /download?url=...                   ║
-║  📤 Upload: /upload (max 250MB, auto cleanup)     ║
+║  📤 Upload: /upload (max 250MB)                   ║
+║  📊 System Info: /system-info                      ║
 ╠══════════════════════════════════════════╣
-║  💾 Upload limit: 250MB/file                       ║
-║  🧹 Auto cleanup when disk >80% full               ║
+║  🚀 Deployed on: ${isPxxl ? 'Pxxl' : 'Local'}                     ║
 ║  ⚡ Status: ✅ Running                               ║
 ╚══════════════════════════════════════════╝
   `);
