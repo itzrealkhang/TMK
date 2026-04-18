@@ -609,7 +609,7 @@
       <div class="logo">
         <h1>TMK API</h1>
         <div class="badge">
-          <span class="version">v2.6.0</span>
+          <span class="version">v2.8.0</span>
           <span><i class="far fa-clock"></i> 30min cache</span>
           <span><i class="fas fa-bolt"></i> 99.9% uptime</span>
         </div>
@@ -618,7 +618,7 @@
 
     <section class="hero">
       <h2>Professional Image, Video & Upload Service</h2>
-      <p>High-quality images from Pinterest, video collection, smart downloader, and file upload with auto cleanup. All in one API.</p>
+      <p>High-quality images from Pinterest, video collection, smart downloader (yt-dlp), and file upload with auto cleanup. All in one API.</p>
       
       <div class="stats">
         <div class="stat-item">
@@ -741,7 +741,7 @@
           <span class="endpoint-path">/download</span>
           <span class="method download">GET</span>
         </div>
-        <div class="endpoint-desc">Get video info + download link (YouTube, TikTok, Facebook...)</div>
+        <div class="endpoint-desc">Get video info + download link (YouTube, TikTok, Facebook...) using yt-dlp</div>
         <div class="code-block"><span class="code-line">GET /download?url=VIDEO_URL</span></div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('download?url=')">📋 Copy</button>
@@ -766,7 +766,7 @@
           <span class="keyword-tag">250MB</span>
         </div>
         <div class="code-block">
-          <span class="code-line">curl -X POST -F "file=@video.mp4" https://tmk.pxxl.click/upload</span>
+          <span class="code-line">curl -X POST -F "file=@video.mp4" https://tmk-qzph.onrender.com/upload</span>
         </div>
         <div class="actions">
           <button class="btn btn-primary" onclick="copyUrl('upload')">📋 Copy URL</button>
@@ -810,7 +810,7 @@
       <div class="preview-info" id="previewInfo">
         <span>🔍 Endpoint: <strong id="currentEndpoint">/girl</strong></span>
         <span style="margin: 0 12px;">·</span>
-        <span>Keyword: <strong id="currentKeyword">girl</strong></span>
+        <span>Keyword: <strong id="currentKeyword">gái xinh</strong></span>
       </div>
 
       <!-- Download Demo -->
@@ -1045,7 +1045,7 @@
             <p>📁 File: ${data.data.file.originalname}</p>
             <p>📦 Size: ${data.data.file.size_mb} MB</p>
             <p>🔗 URL: <a href="${data.data.file.url}" target="_blank" style="color: #4f46e5;">${data.data.file.url}</a></p>
-            <p>💾 Storage: ${data.data.storage.used} / ${data.data.storage.total} (${data.data.storage.usage_percent})</p>
+            <p>💾 Storage: ${data.data.storage.used} / ${data.data.storage.total}</p>
           `;
         } else {
           resultDiv.innerHTML = `<p style="color: #ef4444;">❌ Error: ${data.error}</p>`;
