@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const os = require('os');
 
-// Import handler Gura (giữ nguyên)
+// Import handler Gura
 let handleGura = (req, res) => res.json({ success: false, message: "Gura module not loaded" });
 try {
   const gura = require("./gura.js");
@@ -17,7 +17,6 @@ try {
   console.log("ℹ️ Không tìm thấy module Gura, bỏ qua");
 }
 
-// Khởi tạo app
 const app = express();
 
 // Middleware
@@ -148,8 +147,8 @@ let cache = {
 
 // ==================== KEYWORDS ====================
 const KEYWORDS = {
-  girl: ["gái xinh", "beautiful girl", "cute girl", "gái", "hot girl"],
-  boy: ["trai đẹp", "handsome boy", "cute boy", "boy", "hot boy"],
+  girl: ["gái xinh", "gái đẹp", "gái cute"],
+  boy: ["trai đẹp", "trai 6 múi", "trai"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay"],
   anime: ["anime", "anime girl", "anime boy", "cute anime", "anime art", "manga", "waifu"]
 };
@@ -163,69 +162,101 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ==================== HÀM PINTEREST ĐÃ FIX ====================
+// ==================== HÀM PINTEREST (THEO CODE MẪU ĐANG DÙNG) ====================
 async function searchPinterestImages(query, limit = 30) {
   try {
     const encodedQuery = encodeURIComponent(query);
-    
-    // Dùng API Pinterest mới
-    const url = `https://www.pinterest.com/resource/BaseSearchResource/get/`;
-    
-    const payload = {
-      source_url: `/search/pins/?q=${encodedQuery}`,
-      data: JSON.stringify({
-        options: {
-          query: query,
-          scope: "pins",
-          page_size: limit,
-          redux_normalize_feed: true,
-          rs: "typed"
-        },
-        context: {}
-      }),
-      _: Date.now()
+    const searchUrl = `https://www.pinterest.com/resource/BaseSearchResource/get/`;
+
+    const data = {
+      options: {
+        applied_unified_filters: null,
+        appliedProductFilters: "---",
+        article: null,
+        auto_correction_disabled: false,
+        corpus: null,
+        customized_rerank_type: null,
+        domains: null,
+        dynamicPageSizeExpGroup: null,
+        filters: null,
+        journey_depth: null,
+        page_size: limit,
+        price_max: null,
+        price_min: null,
+        query_pin_sigs: null,
+        query: query,
+        redux_normalize_feed: true,
+        request_params: null,
+        rs: "typed",
+        scope: "pins",
+        selected_one_bar_modules: null,
+        seoDrawerEnabled: false,
+        source_id: null,
+        source_module_id: null,
+        source_url: `/search/pins/?q=${encodedQuery}&rs=typed`,
+        top_pin_id: null,
+        top_pin_ids: null,
+      },
+      context: {},
     };
 
     const headers = {
-      "Accept": "application/json, text/javascript, */*; q=0.01",
-      "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "Origin": "https://www.pinterest.com",
-      "Referer": `https://www.pinterest.com/search/pins/?q=${encodedQuery}`,
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-      "x-app-version": "d8c18cb",
+      Accept: "application/json, text/javascript, */*, q=0.01",
+      Referer: `https://www.pinterest.com/`,
+      "x-app-version": "9237374",
       "x-pinterest-appstate": "active",
-      "x-requested-with": "XMLHttpRequest"
+      "x-pinterest-source-url": `/search/pins/?q=${encodedQuery}&rs=typed`,
+      "x-requested-with": "XMLHttpRequest",
+      "x-pinterest-pws-handler": "www/search/[scope].js",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     };
 
-    const response = await axios.post(url, new URLSearchParams(payload), { headers, timeout: 15000 });
-    
-    const results = response.data?.resource_response?.data?.results || [];
-    const imageUrls = [];
-    
-    for (const pin of results) {
-      if (pin?.images) {
-        const url = pin.images.orig?.url || 
-                   pin.images["1200x"]?.url || 
-                   pin.images["736x"]?.url || 
-                   pin.images["564x"]?.url || 
-                   pin.images["474x"]?.url;
-        if (url && url.startsWith("http")) {
-          imageUrls.push(url);
-        }
-      }
-    }
-    
-    return [...new Set(imageUrls)]; // Xóa trùng
+    const response = await axios({
+      method: "get",
+      url: searchUrl,
+      headers: headers,
+      params: {
+        source_url: `/search/pins/?q=${encodedQuery}&rs=typed`,
+        data: JSON.stringify(data),
+        _: Date.now(),
+      },
+      timeout: 15000,
+    });
 
+    if (response.data && response.data.resource_response && response.data.resource_response.data) {
+      const results = response.data.resource_response.data.results;
+
+      const imageUrls = results
+        .filter((pin) => {
+          return (
+            pin &&
+            pin.images &&
+            (pin.images.orig || pin.images["736x"] || pin.images["474x"] || pin.images["1200x"] || pin.images["600x"])
+          );
+        })
+        .map((pin) => {
+          return (
+            pin.images.orig?.url ||
+            pin.images["1200x"]?.url ||
+            pin.images["736x"]?.url ||
+            pin.images["600x"]?.url ||
+            pin.images["474x"]?.url
+          );
+        })
+        .filter((url) => url);
+
+      // Xóa URL trùng lặp
+      return [...new Set(imageUrls)];
+    }
+
+    return [];
   } catch (error) {
-    console.error(`Lỗi Pinterest [${query}]:`, error.message);
-    // Fallback images nếu lỗi
-    return [
-      "https://i.imgur.com/Y8Hp6mJ.jpg",
-      "https://i.imgur.com/7U6V4cK.jpg",
-      "https://i.imgur.com/8QqZqZq.jpg"
-    ];
+    console.error("Lỗi Pinterest:", error.message);
+    if (error.response) {
+      console.error("Status:", error.response.status);
+    }
+    return [];
   }
 }
 
@@ -235,7 +266,6 @@ async function handleImageEndpoint(req, res, type, keywordList) {
     const cacheData = cache[type];
     const randomKeyword = keywordList[Math.floor(Math.random() * keywordList.length)];
     
-    // Cache hit
     if (Date.now() - cacheData.lastFetch < cache.ttl && cacheData.images.length > 0) {
       cache.stats.hits++;
       const random = cacheData.images[Math.floor(Math.random() * cacheData.images.length)];
@@ -255,7 +285,6 @@ async function handleImageEndpoint(req, res, type, keywordList) {
       });
     }
 
-    // Fetch new images
     console.log(`🔄 Đang tìm ảnh ${type} với keyword: ${randomKeyword}`);
     const images = await searchPinterestImages(randomKeyword, 30);
 
@@ -342,7 +371,6 @@ app.get("/download", async (req, res) => {
     const filename = `video_${fileId}.mp4`;
     outputPath = path.join(DOWNLOAD_DIR, filename);
 
-    // Lấy thông tin video
     const infoCommand = `yt-dlp -j --no-playlist "${url}"`;
     const info = await new Promise((resolve, reject) => {
       exec(infoCommand, { timeout: 30000 }, (error, stdout) => {
@@ -351,7 +379,6 @@ app.get("/download", async (req, res) => {
       });
     });
 
-    // Tải video
     const downloadCommand = `yt-dlp -f "best" -o "${outputPath}" "${url}"`;
     await new Promise((resolve, reject) => {
       exec(downloadCommand, { timeout: 120000 }, (error) => {
