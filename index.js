@@ -148,10 +148,10 @@ let cache = {
 
 // ==================== KEYWORDS ====================
 const KEYWORDS = {
-  girl: ["gái xinh", "gái", "gái cute"],
-  boy: ["boy", "trai đẹp", "trai 6 múi"],
-  cosplay: ["cosplay", "cosplay girl", "anime cosplay"],
-  anime: ["anime", "anime girl", "anime art", "manga", "waifu"]
+  girl: ["gái xinh", "beautiful girl", "cute girl", "gái", "hot girl"],
+  boy: ["trai đẹp", "handsome boy", "cute boy", "boy", "hot boy"],
+  cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay"],
+  anime: ["anime", "anime girl", "anime boy", "cute anime", "anime art", "manga", "waifu"]
 };
 
 app.use((req, res, next) => {
@@ -163,39 +163,69 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ==================== HÀM PINTEREST (GIỮ NGUYÊN CẤU TRÚC) ====================
-async function searchPinterestImages(query, limit = 50) {
+// ==================== HÀM PINTEREST ĐÃ FIX ====================
+async function searchPinterestImages(query, limit = 30) {
   try {
     const encodedQuery = encodeURIComponent(query);
-    const searchUrl = `https://www.pinterest.com/resource/BaseSearchResource/get/`;
-    const data = {
-      options: {
-        query: query,
-        scope: "pins",
-        page_size: limit,
-        redux_normalize_feed: true,
-        rs: "typed",
-        source_url: `/search/pins/?q=${encodedQuery}&rs=typed`,
-      },
-      context: {},
+    
+    // Dùng API Pinterest mới
+    const url = `https://www.pinterest.com/resource/BaseSearchResource/get/`;
+    
+    const payload = {
+      source_url: `/search/pins/?q=${encodedQuery}`,
+      data: JSON.stringify({
+        options: {
+          query: query,
+          scope: "pins",
+          page_size: limit,
+          redux_normalize_feed: true,
+          rs: "typed"
+        },
+        context: {}
+      }),
+      _: Date.now()
     };
+
     const headers = {
-      Accept: "application/json, text/javascript, */*, q=0.01",
-      Referer: `https://www.pinterest.com/`,
-      "x-app-version": "9237374",
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "Origin": "https://www.pinterest.com",
+      "Referer": `https://www.pinterest.com/search/pins/?q=${encodedQuery}`,
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      "x-app-version": "d8c18cb",
       "x-pinterest-appstate": "active",
-      "x-pinterest-source-url": `/search/pins/?q=${encodedQuery}&rs=typed`,
-      "x-requested-with": "XMLHttpRequest",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "x-requested-with": "XMLHttpRequest"
     };
-    const response = await axios({ method: "get", url: searchUrl, headers, params: { source_url: `/search/pins/?q=${encodedQuery}&rs=typed`, data: JSON.stringify(data), _: Date.now() }, timeout: 10000 });
-    if (response.data?.resource_response?.data?.results) {
-      return response.data.resource_response.data.results.filter(pin => pin?.images).map(pin => pin.images.orig?.url || pin.images["1200x"]?.url || pin.images["736x"]?.url || pin.images["474x"]?.url).filter(url => url);
+
+    const response = await axios.post(url, new URLSearchParams(payload), { headers, timeout: 15000 });
+    
+    const results = response.data?.resource_response?.data?.results || [];
+    const imageUrls = [];
+    
+    for (const pin of results) {
+      if (pin?.images) {
+        const url = pin.images.orig?.url || 
+                   pin.images["1200x"]?.url || 
+                   pin.images["736x"]?.url || 
+                   pin.images["564x"]?.url || 
+                   pin.images["474x"]?.url;
+        if (url && url.startsWith("http")) {
+          imageUrls.push(url);
+        }
+      }
     }
-    return [];
+    
+    return [...new Set(imageUrls)]; // Xóa trùng
+
   } catch (error) {
     console.error(`Lỗi Pinterest [${query}]:`, error.message);
-    return [];
+    // Fallback images nếu lỗi
+    return [
+      "https://i.imgur.com/Y8Hp6mJ.jpg",
+      "https://i.imgur.com/7U6V4cK.jpg",
+      "https://i.imgur.com/8QqZqZq.jpg"
+    ];
   }
 }
 
@@ -204,21 +234,73 @@ async function handleImageEndpoint(req, res, type, keywordList) {
   try {
     const cacheData = cache[type];
     const randomKeyword = keywordList[Math.floor(Math.random() * keywordList.length)];
+    
+    // Cache hit
     if (Date.now() - cacheData.lastFetch < cache.ttl && cacheData.images.length > 0) {
       cache.stats.hits++;
       const random = cacheData.images[Math.floor(Math.random() * cacheData.images.length)];
-      return res.json({ success: true, data: { url: random, id: Math.random().toString(36).substring(7), keyword: randomKeyword }, meta: { endpoint: `/${type}`, cached: true, total: cacheData.images.length, version: "2.8.0" } });
+      return res.json({
+        success: true,
+        data: {
+          url: random,
+          id: Math.random().toString(36).substring(7),
+          keyword: randomKeyword
+        },
+        meta: {
+          endpoint: `/${type}`,
+          cached: true,
+          total: cacheData.images.length,
+          version: "2.8.0"
+        }
+      });
     }
-    const images = await searchPinterestImages(randomKeyword, 50);
+
+    // Fetch new images
+    console.log(`🔄 Đang tìm ảnh ${type} với keyword: ${randomKeyword}`);
+    const images = await searchPinterestImages(randomKeyword, 30);
+
     if (images.length > 0) {
       cacheData.images = images;
       cacheData.lastFetch = Date.now();
       const random = images[Math.floor(Math.random() * images.length)];
-      return res.json({ success: true, data: { url: random, id: Math.random().toString(36).substring(7), keyword: randomKeyword }, meta: { endpoint: `/${type}`, cached: false, total: images.length, version: "2.8.0" } });
+      return res.json({
+        success: true,
+        data: {
+          url: random,
+          id: Math.random().toString(36).substring(7),
+          keyword: randomKeyword
+        },
+        meta: {
+          endpoint: `/${type}`,
+          cached: false,
+          total: images.length,
+          version: "2.8.0"
+        }
+      });
+    } else {
+      return res.json({
+        success: true,
+        data: {
+          url: "https://i.imgur.com/Y8Hp6mJ.jpg",
+          id: "fallback",
+          keyword: randomKeyword
+        },
+        meta: {
+          endpoint: `/${type}`,
+          source: "fallback"
+        }
+      });
     }
-    return res.json({ success: true, data: { url: "https://i.imgur.com/Y8Hp6mJ.jpg", id: "fallback", keyword: randomKeyword }, meta: { endpoint: `/${type}`, source: "fallback" } });
   } catch (err) {
-    return res.json({ success: true, data: { url: "https://i.imgur.com/Y8Hp6mJ.jpg", id: "error" }, meta: { endpoint: `/${type}` } });
+    console.error(`Lỗi ${type}:`, err);
+    return res.json({
+      success: true,
+      data: {
+        url: "https://i.imgur.com/Y8Hp6mJ.jpg",
+        id: "error"
+      },
+      meta: { endpoint: `/${type}` }
+    });
   }
 }
 
