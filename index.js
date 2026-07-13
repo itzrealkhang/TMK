@@ -6,6 +6,7 @@ const { exec } = require('child_process');
 const crypto = require('crypto');
 const multer = require('multer');
 const os = require('os');
+const sharp = require('sharp');
 
 // Import handler Gura
 let handleGura = (req, res) => res.json({ success: false, message: "Gura module not loaded" });
@@ -31,14 +32,17 @@ console.log(`🚀 TMK API v2.8.0 chạy trên: ${isRender ? 'Render' : 'Local'}`
 // ==================== CẤU HÌNH THƯ MỤC ====================
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
+const COVER_DIR = path.join(__dirname, 'covers');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 if (!fs.existsSync(DOWNLOAD_DIR)) fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+if (!fs.existsSync(COVER_DIR)) fs.mkdirSync(COVER_DIR, { recursive: true });
 console.log(`📁 Thư mục uploads: ${UPLOAD_DIR}`);
 console.log(`📁 Thư mục downloads: ${DOWNLOAD_DIR}`);
+console.log(`📁 Thư mục covers: ${COVER_DIR}`);
 
-// Giới hạn dung lượng (Render free có 512MB, để an toàn dùng 400MB)
+// Giới hạn dung lượng
 const MAX_DISK_USAGE = 400 * 1024 * 1024; // 400MB
-const WARNING_THRESHOLD = 0.8; // 80%
+const WARNING_THRESHOLD = 0.8;
 
 // ==================== HÀM DỌN DẸP FILE ====================
 function getFolderSize(folderPath) {
@@ -54,11 +58,11 @@ function getFolderSize(folderPath) {
   return totalSize;
 }
 
-function deleteOldestFile() {
+function deleteOldestFile(dir) {
   try {
-    const files = fs.readdirSync(UPLOAD_DIR)
+    const files = fs.readdirSync(dir)
       .map(file => {
-        const filePath = path.join(UPLOAD_DIR, file);
+        const filePath = path.join(dir, file);
         const stats = fs.statSync(filePath);
         return { file, filePath, mtime: stats.mtimeMs, size: stats.size };
       })
@@ -75,18 +79,19 @@ function deleteOldestFile() {
 }
 
 function checkAndCleanDisk() {
-  const totalSize = getFolderSize(UPLOAD_DIR);
+  const totalSize = getFolderSize(UPLOAD_DIR) + getFolderSize(DOWNLOAD_DIR) + getFolderSize(COVER_DIR);
   const usagePercent = totalSize / MAX_DISK_USAGE;
   if (usagePercent >= WARNING_THRESHOLD) {
-    console.log(`⚠️ Dung lượng upload đạt ${(usagePercent * 100).toFixed(0)}%, bắt đầu dọn dẹp...`);
-    let cleaned = 0;
-    let currentSize = totalSize;
-    while (currentSize > MAX_DISK_USAGE * 0.5) {
-      if (!deleteOldestFile()) break;
-      currentSize = getFolderSize(UPLOAD_DIR);
-      cleaned++;
-    }
-    console.log(`✅ Đã dọn ${cleaned} file.`);
+    console.log(`⚠️ Dung lượng đạt ${(usagePercent * 100).toFixed(0)}%, bắt đầu dọn dẹp...`);
+    [UPLOAD_DIR, DOWNLOAD_DIR, COVER_DIR].forEach(dir => {
+      let cleaned = 0;
+      let currentSize = getFolderSize(dir);
+      while (currentSize > MAX_DISK_USAGE * 0.5) {
+        if (!deleteOldestFile(dir)) break;
+        currentSize = getFolderSize(dir);
+        cleaned++;
+      }
+    });
   }
 }
 setInterval(checkAndCleanDisk, 10 * 60 * 1000);
@@ -108,6 +113,23 @@ setInterval(() => {
     });
   });
 }, 30 * 60 * 1000);
+
+// Dọn dẹp cover cũ (1 ngày)
+setInterval(() => {
+  if (!fs.existsSync(COVER_DIR)) return;
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  fs.readdir(COVER_DIR, (err, files) => {
+    if (err) return;
+    files.forEach(file => {
+      const filePath = path.join(COVER_DIR, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) return;
+        if (now - stats.mtimeMs > oneDay) fs.unlink(filePath, () => {});
+      });
+    });
+  });
+}, 60 * 60 * 1000);
 
 // ==================== CẤU HÌNH MULTER ====================
 const storage = multer.diskStorage({
@@ -147,8 +169,8 @@ let cache = {
 
 // ==================== KEYWORDS ====================
 const KEYWORDS = {
-  girl: ["gái xinh", "gái đẹp", "gái cute"],
-  boy: ["trai đẹp", "trai 6 múi", "trai"],
+  girl: ["gái xinh", "beautiful girl", "cute girl", "gái", "hot girl"],
+  boy: ["trai đẹp", "handsome boy", "cute boy", "boy", "hot boy"],
   cosplay: ["cosplay", "cosplay girl", "anime cosplay", "game cosplay"],
   anime: ["anime", "anime girl", "anime boy", "cute anime", "anime art", "manga", "waifu"]
 };
@@ -162,7 +184,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ==================== HÀM PINTEREST (THEO CODE MẪU ĐANG DÙNG) ====================
+// ==================== HÀM PINTEREST ====================
 async function searchPinterestImages(query, limit = 30) {
   try {
     const encodedQuery = encodeURIComponent(query);
@@ -246,7 +268,6 @@ async function searchPinterestImages(query, limit = 30) {
         })
         .filter((url) => url);
 
-      // Xóa URL trùng lặp
       return [...new Set(imageUrls)];
     }
 
@@ -458,6 +479,251 @@ app.post("/upload", upload.single("file"), (req, res) => {
   });
 });
 app.use("/uploads", express.static(UPLOAD_DIR));
+
+// ==================== TÁCH BÌA (COVER) - TỰ LÀM ====================
+
+app.get("/cover", async (req, res) => {
+  try {
+    const { url } = req.query;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thiếu URL video. Vui lòng thêm ?url=link_video'
+      });
+    }
+
+    try { new URL(url); } catch (e) {
+      return res.status(400).json({ success: false, error: 'URL không hợp lệ' });
+    }
+
+    console.log(`🖼️ Đang lấy cover từ: ${url}`);
+
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    let coverUrl = null;
+    let platform = 'unknown';
+    let videoId = null;
+    let title = null;
+    let allThumbnails = [];
+
+    // --- XỬ LÝ YOUTUBE ---
+    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+      platform = 'youtube';
+
+      if (hostname.includes('youtu.be')) {
+        videoId = urlObj.pathname.slice(1);
+      } else if (urlObj.searchParams.has('v')) {
+        videoId = urlObj.searchParams.get('v');
+      } else if (urlObj.pathname.includes('/shorts/')) {
+        videoId = urlObj.pathname.split('/shorts/')[1]?.split('?')[0];
+      } else if (urlObj.pathname.includes('/embed/')) {
+        videoId = urlObj.pathname.split('/embed/')[1]?.split('?')[0];
+      }
+
+      if (videoId) {
+        try {
+          const apiRes = await axios.get(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+          title = apiRes.data.title;
+        } catch (e) {}
+
+        const base = `https://img.youtube.com/vi/${videoId}`;
+        allThumbnails = [
+          { label: 'Maxres (Full HD)', url: `${base}/maxresdefault.jpg`, quality: 'maxres' },
+          { label: 'SD (640x480)', url: `${base}/sddefault.jpg`, quality: 'sd' },
+          { label: 'HQ (480x360)', url: `${base}/hqdefault.jpg`, quality: 'hq' },
+          { label: 'MQ (320x180)', url: `${base}/mqdefault.jpg`, quality: 'mq' },
+          { label: 'Default (120x90)', url: `${base}/default.jpg`, quality: 'default' }
+        ];
+        coverUrl = allThumbnails[0].url;
+      }
+    }
+
+    // --- XỬ LÝ TIKTOK ---
+    else if (hostname.includes('tiktok.com')) {
+      platform = 'tiktok';
+      try {
+        const htmlRes = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          timeout: 10000
+        });
+        const html = htmlRes.data;
+        const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"[^>]*>/i);
+        if (ogMatch) {
+          coverUrl = ogMatch[1];
+          allThumbnails.push({ label: 'OG Image', url: coverUrl, quality: 'og' });
+        }
+        const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"[^>]*>/i);
+        if (titleMatch) title = titleMatch[1];
+      } catch (e) {}
+    }
+
+    // --- XỬ LÝ FACEBOOK ---
+    else if (hostname.includes('facebook.com') || hostname.includes('fb.com')) {
+      platform = 'facebook';
+      try {
+        const htmlRes = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          timeout: 10000
+        });
+        const html = htmlRes.data;
+        const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"[^>]*>/i);
+        if (ogMatch) {
+          coverUrl = ogMatch[1];
+          allThumbnails.push({ label: 'OG Image', url: coverUrl, quality: 'og' });
+        }
+        const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"[^>]*>/i);
+        if (titleMatch) title = titleMatch[1];
+      } catch (e) {}
+    }
+
+    // --- XỬ LÝ INSTAGRAM ---
+    else if (hostname.includes('instagram.com')) {
+      platform = 'instagram';
+      try {
+        const htmlRes = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          timeout: 10000
+        });
+        const html = htmlRes.data;
+        const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"[^>]*>/i);
+        if (ogMatch) {
+          coverUrl = ogMatch[1];
+          allThumbnails.push({ label: 'OG Image', url: coverUrl, quality: 'og' });
+        }
+        const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"[^>]*>/i);
+        if (titleMatch) title = titleMatch[1];
+      } catch (e) {}
+    }
+
+    // --- XỬ LÝ TWITTER/X ---
+    else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+      platform = 'twitter';
+      try {
+        const htmlRes = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          timeout: 10000
+        });
+        const html = htmlRes.data;
+        const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"[^>]*>/i);
+        if (ogMatch) {
+          coverUrl = ogMatch[1];
+          allThumbnails.push({ label: 'OG Image', url: coverUrl, quality: 'og' });
+        }
+        const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"[^>]*>/i);
+        if (titleMatch) title = titleMatch[1];
+      } catch (e) {}
+    }
+
+    // --- NẾU KO TÌM ĐƯỢC ---
+    if (!coverUrl) {
+      return res.json({
+        success: false,
+        error: 'Không thể lấy cover từ URL này',
+        platform,
+        meta: { endpoint: "/cover", timestamp: Date.now(), version: "2.8.0" }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        title: title || 'Video',
+        platform,
+        video_id: videoId,
+        cover_url: coverUrl,
+        thumbnails: allThumbnails
+      },
+      meta: {
+        endpoint: "/cover",
+        timestamp: Date.now(),
+        version: "2.8.0"
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Lỗi lấy cover:', err.message);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      meta: { endpoint: "/cover", timestamp: Date.now(), version: "2.8.0" }
+    });
+  }
+});
+
+// ==================== LÀM NÉT ẢNH (ENHANCE) - TỰ LÀM BẰNG SHARP ====================
+
+app.post("/enhance", upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Không có file ảnh' });
+    }
+
+    const scale = parseInt(req.body.scale) || 2;
+    if (scale < 1 || scale > 4) {
+      return res.status(400).json({ success: false, error: 'Scale phải từ 1-4' });
+    }
+
+    const inputPath = req.file.path;
+    const outputFilename = `enhanced_${Date.now()}.${path.extname(req.file.originalname) || 'jpg'}`;
+    const outputPath = path.join(UPLOAD_DIR, outputFilename);
+
+    console.log(`🔍 Đang làm nét ảnh: ${req.file.originalname} (scale: ${scale}x)`);
+
+    // Đọc ảnh và xử lý với sharp
+    const image = sharp(inputPath);
+    const metadata = await image.metadata();
+
+    // Upscale bằng sharp với sharpening
+    await image
+      .resize(metadata.width * scale, metadata.height * scale, {
+        kernel: sharp.kernel.lanczos3,
+        fit: 'fill'
+      })
+      .sharpen({
+        sigma: 1.5,
+        m1: 1.0,
+        m2: 2.0,
+        x1: 2.0,
+        y2: 2.0,
+        y3: 1.5
+      })
+      .jpeg({ quality: 90, progressive: true })
+      .toFile(outputPath);
+
+    // Xóa file gốc
+    fs.unlinkSync(inputPath);
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${outputFilename}`;
+    const stats = fs.statSync(outputPath);
+
+    res.json({
+      success: true,
+      data: {
+        original_name: req.file.originalname,
+        original_size: (req.file.size / 1024 / 1024).toFixed(2) + ' MB',
+        enhanced_url: fileUrl,
+        enhanced_size: (stats.size / 1024 / 1024).toFixed(2) + ' MB',
+        scale: scale,
+        original_dimensions: `${metadata.width}x${metadata.height}`,
+        enhanced_dimensions: `${metadata.width * scale}x${metadata.height * scale}`
+      },
+      meta: {
+        endpoint: "/enhance",
+        timestamp: Date.now(),
+        version: "2.8.0"
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Lỗi enhance:', err.message);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      meta: { timestamp: Date.now(), version: "2.8.0" }
+    });
+  }
+});
 
 // ==================== UTILITY ENDPOINTS ====================
 app.get("/stats", (req, res) => {
